@@ -803,7 +803,32 @@ function fmtDate(val){if(!val)return'TBD';var d=new Date(val+'T00:00:00');return
 function fmtDateShort(val){if(!val)return'Upon Receipt';var d=new Date(val+'T00:00:00');return d.toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});}
 function strip(t){return t.replace(/```json|```/g,'').trim();}
 function coSign(){return '\n\nRespectfully,\n\n'+co.president+'\nPresident\n'+co.name+'\n'+co.address+'\nPhone: '+co.phone+' | Email: '+co.email;}
-async function claude(prompt,max){max=max||1200;var r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:max,messages:[{role:'user',content:prompt}]})});var d=await r.json();return d.content.map(function(c){return c.text||'';}).join('');}
+async function claude(prompt,max){
+  max=max||1200;
+  try{
+    var r=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'x-api-key':'',
+        'anthropic-version':'2023-06-01',
+        'anthropic-dangerous-allow-browser':'true'
+      },
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:max,messages:[{role:'user',content:prompt}]})
+    });
+    if(!r.ok){
+      var err=await r.text();
+      console.error('API error '+r.status+':',err);
+      throw new Error('API returned '+r.status);
+    }
+    var d=await r.json();
+    if(!d.content){throw new Error('No content in response: '+JSON.stringify(d));}
+    return d.content.map(function(c){return c.text||'';}).join('');
+  }catch(e){
+    console.error('Claude API call failed:',e);
+    throw e;
+  }
+}
 window.addEventListener('load',function(){showSetupInstructions();});
 
 async function generateTodo(){
@@ -911,12 +936,38 @@ async function reviseFlyer(){
 }
 
 async function genSocial(){
-  var out=g('sm-out');out.innerHTML='<div class="card"><div class="loading">✨ Writing your posts...</div></div>';
-  var prompt='You are a social media manager for '+co.name+', Pakistani-American cultural organization in South Florida run by Liaquat Ali. They host the Pakistan Independence Day festival (Azadi Mela) annually at Coral Springs Center for the Arts for 3,000+ attendees.\nPost type: '+gv('sm-type')+', Platforms: '+gv('sm-platform')+', Event: '+(gv('sm-ev')||'Pakistan Azadi Mela 2026')+', Date: '+fmtDate(gv('sm-date'))+', Venue: '+(gv('sm-venue')||'Coral Springs Center for the Arts')+', Artists: '+(gv('sm-artists')||'TBD')+', Notes: '+(gv('sm-notes')||'')+'\nReturn ONLY JSON array. Each: {"platform":string,"caption":string,"hashtags":string}. Exciting, culturally authentic, use emojis naturally.';
+  var out=g('sm-out');
+  out.innerHTML='<div class="card"><div class="loading">✨ Generating your posts — editable preview coming up...</div></div>';
+  var prompt='You are a social media manager for '+co.name+', Pakistani-American cultural organization in South Florida run by '+co.president+'. They host the Pakistan Independence Day festival (Azadi Mela) annually at Coral Springs Center for the Arts for 3,000+ attendees.\nPost type: '+gv('sm-type')+', Platforms: '+gv('sm-platform')+', Event: '+(gv('sm-ev')||'Pakistan Azadi Mela 2026')+', Date: '+fmtDate(gv('sm-date'))+', Venue: '+(gv('sm-venue')||'Coral Springs Center for the Arts')+', Artists: '+(gv('sm-artists')||'TBD')+', Notes: '+(gv('sm-notes')||'')+'\nReturn ONLY valid JSON array. Each item must have: {"platform":string,"platformEmoji":string,"caption":string,"hashtags":string}. Write exciting, culturally authentic captions with emojis. Generate one post per platform requested.';
   try{
-    var t=await claude(prompt);var posts=JSON.parse(strip(t));
-    out.innerHTML=posts.map(function(p){return '<div class="social-card"><div class="sc-platform">'+p.platform+'</div><div class="sc-body">'+p.caption+'</div><div class="sc-hashtags">'+p.hashtags+'</div><div class="brow" style="margin-top:10px;"><button class="btn btn-s" style="padding:6px 14px;font-size:12px;" onclick="navigator.clipboard.writeText(this.closest(\'.social-card\').querySelector(\'.sc-body\').textContent+\' \'+this.closest(\'.social-card\').querySelector(\'.sc-hashtags\').textContent)">📋 Copy</button></div></div>';}).join('');
-  }catch(e){out.innerHTML='<div class="card" style="color:var(--red);">⚠️ Could not generate. Please try again.</div>';}
+    var t=await claude(prompt);
+    var posts=JSON.parse(strip(t));
+    if(!Array.isArray(posts)||posts.length===0){throw new Error('Invalid response');}
+    out.innerHTML='<div style="font-size:12px;color:var(--muted);margin-bottom:14px;padding:0 2px;">✅ <strong style="color:var(--text);">Editable preview below</strong> — tap inside any caption to edit before copying!</div>'+
+    posts.map(function(p,i){
+      var pid='sm-cap-'+i;
+      var hid='sm-hash-'+i;
+      var platformIcons={'Facebook':'📘','Instagram':'📸','TikTok':'🎵'};
+      var icon=p.platformEmoji||platformIcons[p.platform]||'📱';
+      return '<div class="social-card">'+
+        '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">'+
+          '<div class="sc-platform">'+icon+'  '+p.platform+'</div>'+
+          '<div style="font-size:10px;color:var(--muted);">'+(p.caption?p.caption.length:'0')+' chars</div>'+
+        '</div>'+
+        '<div style="font-size:11px;color:var(--muted);margin-bottom:4px;font-weight:700;">CAPTION — tap to edit:</div>'+
+        '<textarea id="'+pid+'" style="width:100%;background:#0a001a;border:1px solid var(--border);color:var(--text);padding:9px 12px;border-radius:7px;font-size:13px;font-family:Nunito,sans-serif;min-height:100px;resize:vertical;line-height:1.7;">'+p.caption+'</textarea>'+
+        '<div style="font-size:11px;color:var(--muted);margin:8px 0 4px;font-weight:700;">HASHTAGS — tap to edit:</div>'+
+        '<textarea id="'+hid+'" style="width:100%;background:#0a001a;border:1px solid var(--border);color:var(--blue);padding:7px 12px;border-radius:7px;font-size:12px;font-family:Nunito,sans-serif;min-height:50px;resize:vertical;">'+p.hashtags+'</textarea>'+
+        '<div class="brow" style="margin-top:10px;">'+
+          '<button class="btn btn-p" style="padding:7px 16px;font-size:12px;" onclick="var cap=g(\''+pid+'\');var hash=g(\''+hid+'\');if(cap&&hash)navigator.clipboard.writeText(cap.value+\'\\n\\n\'+hash.value);showToast(\'📋 '+p.platform+' post copied!\')">📋 Copy '+p.platform+'</button>'+
+          '<button class="btn btn-s" style="padding:7px 14px;font-size:12px;" onclick="var cap=g(\''+pid+'\');var hash=g(\''+hid+'\');if(cap&&hash)autoSaveText(\''+p.platform+'-post.txt\',cap.value+\'\\n\\n\'+hash.value)">💾 Save</button>'+
+        '</div>'+
+      '</div>';
+    }).join('');
+  }catch(e){
+    console.error('genSocial error:',e);
+    out.innerHTML='<div class="card" style="color:var(--red);">⚠️ Could not generate posts. Please try again.</div>';
+  }
 }
 
 async function genAgenda(){
@@ -1068,11 +1119,50 @@ function saveAllCerts(){
   showToast('💾 Saving '+allCertData.names.length+' certificates to Downloads!');
 }
 
-function genShield(){
-  var type=gv('sh-type');var name=gv('sh-name')||'[Recipient Name]';var ev=gv('sh-ev')||'Pakistan Independence Day Festival 2026';var date=fmtDate(gv('sh-date'));
-  var reasons={'Outstanding Sponsor Award':'In recognition of your continuous support and excellent community service of the Pakistani-American community in Miami, Florida, USA','Outstanding Performance Award':'In recognition for your outstanding performance at the Pakistan Independence Day Festival in Miami, Florida, USA','Lifetime Achievement Award':'In appreciation for dedicating an entire lifetime in serving the Pakistani-American community and making continuous efforts in bringing them together.','Outstanding Support Award':'In recognition for always supporting and cooperating with the Pakistani-American community of Miami, Florida, USA'};
-  var reason=gv('sh-reason')||(reasons[type]||'In recognition of your outstanding contributions to the Pakistani-American community.');
-  g('sh-out').innerHTML='<div class="shield-wrap"><div style="font-size:42px;margin-bottom:12px;">🛡️</div><div style="font-family:Cinzel,serif;font-size:18px;color:#8B6914;margin-bottom:8px;">'+type+'</div><div style="font-size:12px;color:#555;line-height:1.7;max-width:420px;margin:0 auto 14px;">'+reason+'</div><div style="font-size:11px;color:#999;margin-bottom:4px;">Presented to:</div><div style="font-size:16px;font-weight:700;color:#1a1a1a;margin-bottom:10px;">'+name+'</div><div style="font-size:12px;color:#666;margin-bottom:6px;">Asian Welfare Culture Society | President: Liaquat Ali</div><div style="font-size:12px;font-weight:700;color:#8B6914;">'+date+'</div></div><div class="brow"><button class="btn btn-p" onclick="sp(\'Export this award shield as a printable PDF\')">⬇ Export PDF ↗</button></div>';
+function genShield(){genShields();}
+function genShields(){
+  var type=gv('sh-type');
+  var namesRaw=gv('sh-names')||'';
+  var ev=gv('sh-ev')||'Pakistan Independence Day Festival 2026';
+  var date=fmtDate(gv('sh-date'));
+  var names=namesRaw.split('\n').map(function(n){return n.trim();}).filter(function(n){return n.length>0;});
+  if(!names.length){alert('Please enter at least one recipient name.');return;}
+  var shieldReasons={
+    'Outstanding Sponsor Award':'In recognition of your continuous support and excellent community service of the Pakistani-American community in South Florida, USA',
+    'Outstanding Performance Award':'In recognition for your outstanding performance at the Pakistan Independence Day Festival in South Florida, USA',
+    'Lifetime Achievement Award':'In appreciation for dedicating an entire lifetime in serving the Pakistani-American community and making continuous efforts in bringing them together.',
+    'Outstanding Support Award':'In recognition for always supporting and cooperating with the Pakistani-American community of South Florida, USA',
+    'Achievement Award':'In recognition of your outstanding achievements and distinguished service to the Pakistani-American community in South Florida',
+    'Community Service Award':'In recognition of your selfless dedication and service to the Pakistani-American community of South Florida, USA'
+  };
+  var reason=gv('sh-reason')||(shieldReasons[type]||'In recognition of your outstanding contributions to the Pakistani-American community of South Florida.');
+  var html='';
+  names.forEach(function(name,i){
+    var safeName=name.replace(/[^a-zA-Z0-9 ]/g,'').replace(/ /g,'-');
+    html+='<div style="margin-bottom:18px;">'+
+      '<div class="shield-wrap">'+
+        '<div style="font-size:40px;margin-bottom:10px;">🛡️</div>'+
+        '<div style="font-family:Cinzel,serif;font-size:17px;color:#8B6914;margin-bottom:8px;">'+type+'</div>'+
+        '<div style="font-size:12px;color:#555;line-height:1.7;max-width:420px;margin:0 auto 12px;">'+reason+'</div>'+
+        '<div style="font-size:11px;color:#999;margin-bottom:4px;">Presented to:</div>'+
+        '<div style="font-size:16px;font-weight:700;color:#1a1a1a;margin-bottom:8px;">'+name+'</div>'+
+        '<div style="font-size:11px;color:#666;margin-bottom:4px;">'+ev+'</div>'+
+        '<div style="font-size:12px;color:#666;margin-bottom:4px;">'+co.name+' | President: '+co.president+'</div>'+
+        '<div style="font-size:12px;font-weight:700;color:#8B6914;">'+date+'</div>'+
+      '</div>'+
+      '<div class="brow" style="margin-top:-10px;margin-bottom:16px;">'+
+        '<span style="font-size:11px;color:var(--muted);font-weight:700;">'+(i+1)+' of '+names.length+'</span>'+
+        '<button class="btn btn-s" style="font-size:12px;padding:6px 14px;" onclick="autoSaveText(\'Shield-'+safeName+'.txt\',\'AWARD: '+type+'\\nPresented to: '+name+'\\n\\n'+reason+'\\n\\n'+date+'\\n\\n'+co.name+' | President: '+co.president+'\')" >💾 Save This One</button>'+
+      '</div>'+
+    '</div>';
+  });
+  g('sh-out').innerHTML=html;
+  var countEl=g('sh-count');
+  if(countEl){
+    countEl.style.display='block';
+    countEl.className='ibox';
+    countEl.innerHTML='<strong>✅ '+names.length+' award shield'+(names.length>1?'s':'')+' generated!</strong> Recipients: '+names.join(' • ');
+  }
 }
 
 function genParking(){
