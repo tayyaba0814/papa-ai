@@ -1033,13 +1033,13 @@ function genCerts(){
   allCertData={names:names,reason:reason,date:date,ev:ev};
   var out=g('c-out');
   var html='';
+    // Store cert data for individual saves
+  allCertData={names:names,reason:reason,date:date,ev:ev};
   names.forEach(function(name,i){
-    var safeName=name.replace(/[^a-zA-Z0-9 ]/g,'').replace(/ /g,'-');
-    var txtContent='CERTIFICATE OF APPRECIATION\n\nPresented to: '+name+'\n\n'+reason+'\n\n'+date+'\n\nTalha Ali & Liaquat Ali\nTA Entertainment and Production | Asian Welfare Culture Society';
     html+='<div style="position:relative;">'+makeCertHTML(name,reason,date)+
       '<div class="brow" style="margin-top:-8px;margin-bottom:20px;">'+
         '<span style="font-size:12px;color:var(--muted);padding:6px 0;font-weight:700;">'+(i+1)+' of '+names.length+'</span>'+
-        '<button class="btn btn-s" style="font-size:12px;padding:6px 14px;" onclick="autoSaveText('Certificate-'+safeName+'.txt',''+txtContent.replace(/'/g,"\'")+'')">💾 Save This One</button>'+
+        '<button class="btn btn-s" style="font-size:12px;padding:6px 14px;" onclick="saveSingleCert('+i+')">💾 Save This One</button>'+
       '</div></div>';
   });
   out.innerHTML=html;
@@ -1048,6 +1048,14 @@ function genCerts(){
   countEl.className='ibox';
   countEl.innerHTML='<strong>✅ '+names.length+' certificate'+(names.length>1?'s':'')+' generated!</strong> Recipients: '+names.join(' &nbsp;•&nbsp; ');
   g('c-bulk-btns').style.display='flex';
+}
+function saveSingleCert(i){
+  if(!allCertData||!allCertData.names)return;
+  var name=allCertData.names[i];
+  if(!name)return;
+  var safeName=name.replace(/[^a-zA-Z0-9 ]/g,'').replace(/ /g,'-');
+  var txt='CERTIFICATE OF APPRECIATION\n\nPresented to: '+name+'\n\n'+allCertData.reason+'\n\n'+allCertData.date+'\n\nTalha Ali & Liaquat Ali\nTA Entertainment and Production | Asian Welfare Culture Society';
+  autoSaveText('Certificate-'+safeName+'.txt',txt);
 }
 function saveAllCerts(){
   if(!allCertData||!allCertData.names){alert('Generate certificates first.');return;}
