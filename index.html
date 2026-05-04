@@ -247,26 +247,160 @@ select option{background:#0f0020;}
 <!-- FLYER -->
 <div class="panel" id="panel-flyer">
   <div class="ptitle">🎨 Event Flyer Designer</div>
-  <div class="psub">Only the artists, date, and venue change. Everything else stays the same.</div>
+  <div class="psub">Fill in the details — get multiple preview designs, then edit and refine until perfect.</div>
+
   <div class="card">
-    <div class="ibox">🏢 Select your company at the top first — the correct name will appear on the flyer.</div>
-    <div class="frow"><div class="field"><label>Event Name</label><input type="text" id="fl-ev" placeholder="Pakistan Azadi Mela 2026"/></div><div class="field"><label>Event Date</label><input type="date" id="fl-date"/></div></div>
-    <div class="field"><label>Venue & City</label><input type="text" id="fl-venue" placeholder="Coral Springs Center for the Arts, Coral Springs, FL"/></div>
-    <div class="field"><label>Featured Artists (one per line)</label><textarea id="fl-artists" placeholder="Atif Aslam&#10;Rahat Fateh Ali Khan&#10;Farha Anwar" style="min-height:75px;"></textarea></div>
-    <div class="frow"><div class="field"><label>Entry / Ticket Info</label><input type="text" id="fl-tickets" placeholder="Free Admission to General Public"/></div><div class="field"><label>Website / Contact</label><input type="text" id="fl-contact" placeholder="(954) 415-8269 | lali2900@aol.com"/></div></div>
+    <div class="ibox">🏢 Select your company at the top first — the correct presenter name will appear on the flyer.</div>
+    <div class="frow">
+      <div class="field"><label>Event Name</label><input type="text" id="fl-ev" placeholder="27th Annual Azadi Mela"/></div>
+      <div class="field"><label>Sub-title / Edition</label><input type="text" id="fl-subtitle" placeholder="e.g. 27th Annual | A Tribute to Legends"/></div>
+    </div>
+    <div class="frow">
+      <div class="field"><label>Event Date</label><input type="date" id="fl-date"/></div>
+      <div class="field"><label>Event Time</label><input type="text" id="fl-time" placeholder="7:00 PM (Doors open 6:30 PM)"/></div>
+    </div>
+    <div class="frow">
+      <div class="field"><label>Venue Name</label><input type="text" id="fl-venue" placeholder="Coral Springs Center for the Arts"/></div>
+      <div class="field"><label>Venue Address</label><input type="text" id="fl-vaddr" placeholder="2855 Coral Springs Drive, Coral Springs, FL 33065"/></div>
+    </div>
+    <div class="frow">
+      <div class="field"><label>Entry Info</label><input type="text" id="fl-tickets" placeholder="FREE ADMISSION &amp; FREE PARKING"/></div>
+      <div class="field"><label>Ticket Price (if paid)</label><input type="text" id="fl-price" placeholder="$50 General | $100 VIP with Dinner"/></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="ctitle">🎤 Artists / Performers</div>
+    <div class="field"><label>Artist Names (one per line — add role in brackets if needed)</label>
+      <textarea id="fl-artists" style="min-height:90px;" placeholder="Farha Anwar&#10;Inzi DX&#10;Nimra Mehra&#10;Ameer Ali&#10;Raga Boyz [Guest Appearance]&#10;Khalid Baig"></textarea>
+    </div>
+    <div class="field"><label>📸 Artist Photos (upload up to 8 — one per artist in same order as names)</label>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;" id="fl-artist-photos-prev"></div>
+      <div class="upload-zone" onclick="document.getElementById('fl-artist-photos').click()">
+        <div style="font-size:22px;margin-bottom:4px;">📸</div>
+        <div>Tap to upload artist photos (up to 8)</div>
+        <input type="file" id="fl-artist-photos" style="display:none;" accept="image/*" multiple onchange="handleArtistPhotos(event)"/>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="ctitle">👥 Contact Information</div>
+    <div class="ibox" style="margin-bottom:12px;">💡 Add multiple contacts — e.g. one for general info, one for tickets, one for stalls/vendors.</div>
+    <div id="fl-contacts-list"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:8px;align-items:end;" id="fl-contact-row">
+      <div class="field" style="margin:0;"><label>Name</label><input type="text" id="fl-cn-name" placeholder="Liaquat Ali"/></div>
+      <div class="field" style="margin:0;"><label>Phone</label><input type="text" id="fl-cn-phone" placeholder="(954) 415-8269"/></div>
+      <div class="field" style="margin:0;"><label>For (optional)</label><input type="text" id="fl-cn-role" placeholder="General Info / Tickets / Stalls"/></div>
+      <button class="btn btn-p" onclick="addContact()" style="margin-bottom:0;padding:9px 16px;white-space:nowrap;">+ Add</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="ctitle">🏆 Sponsors <span style="color:var(--muted);font-weight:400;font-size:10px;text-transform:none;">(optional — leave blank if no sponsors)</span></div>
+    <div class="field"><label>Include Sponsors?</label>
+      <select id="fl-sponsor-toggle" onchange="toggleSponsors()">
+        <option value="no">No sponsors for this event</option>
+        <option value="yes">Yes — add sponsor names and photos</option>
+      </select>
+    </div>
+    <div id="fl-sponsors-section" style="display:none;">
+      <div class="ibox">💡 Sponsors can appear with their photo above their name (like in the Azadi Mela flyers). Upload photo first, then add name.</div>
+      <div id="fl-sponsors-list" style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:12px;"></div>
+      <div style="display:grid;grid-template-columns:auto 1fr 1fr auto;gap:8px;align-items:end;">
+        <div class="field" style="margin:0;">
+          <label>Photo</label>
+          <div class="upload-zone" style="padding:8px;width:56px;height:56px;display:flex;align-items:center;justify-content:center;" onclick="document.getElementById('fl-sp-photo').click()">
+            <span id="fl-sp-photo-icon">📷</span>
+            <input type="file" id="fl-sp-photo" style="display:none;" accept="image/*" onchange="handleSponsorPhoto(event)"/>
+          </div>
+        </div>
+        <div class="field" style="margin:0;"><label>Sponsor Name</label><input type="text" id="fl-sp-name" placeholder="Mian Tahir Ismail"/></div>
+        <div class="field" style="margin:0;"><label>Title (optional)</label><input type="text" id="fl-sp-title" placeholder="Main Sponsor / Gold Sponsor"/></div>
+        <button class="btn btn-p" onclick="addSponsor()" style="margin-bottom:0;padding:9px 16px;">+ Add</button>
+      </div>
+      <div style="margin-top:10px;" class="field"><label>Organized / Presented By (shown on flyer)</label><input type="text" id="fl-org" placeholder="Organized by: A-1 Foods"/></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="ctitle">🎨 Theme & Design Instructions</div>
+    <div class="frow">
+      <div class="field"><label>Color Theme</label>
+        <select id="fl-theme">
+          <option value="green-gold">🟢 Green & Gold (Pakistan flag — Azadi Mela style)</option>
+          <option value="blue-gold">🔵 Deep Blue & Gold (Qawwali / formal event)</option>
+          <option value="purple-gold">🟣 Purple & Gold (premium concert)</option>
+          <option value="red-gold">🔴 Red & Gold (festive / Bollywood)</option>
+          <option value="dark-dramatic">⚫ Dark & Dramatic (luxury event)</option>
+          <option value="yellow-green">🟡 Yellow & Green (bright / outdoor mela)</option>
+          <option value="custom">✏️ Custom — I will describe it below</option>
+        </select>
+      </div>
+      <div class="field"><label>Design Style</label>
+        <select id="fl-style">
+          <option value="artists-top">Artists across the top, event info below (like Azadi Mela 2025)</option>
+          <option value="artist-center">Main artist large in center with others around</option>
+          <option value="circular-photos">Artist circular photos with gold borders (Qawwali Night style)</option>
+          <option value="bold-concert">Bold concert poster — artist names huge, no photos</option>
+          <option value="elegant">Elegant with floral/leaf decorations and script font</option>
+        </select>
+      </div>
+    </div>
+    <div class="field"><label>Special Visual Instructions <span style="color:var(--muted);font-weight:400;">(describe exactly what you want)</span></label>
+      <textarea id="fl-visual" style="min-height:80px;" placeholder="Examples:&#10;• Include Pakistan landmark silhouettes at the bottom (like mosque, Minar-e-Pakistan)&#10;• Add musical notes floating in the background&#10;• Include USA and Pakistan flags crossed together&#10;• Gold sparkles/glitter effect throughout&#10;• Add a 'FREE ADMISSION' badge in top corner&#10;• Use Urdu calligraphy style for the event name"></textarea>
+    </div>
+    <div class="field"><label>Number of Preview Designs to Generate</label>
+      <select id="fl-count">
+        <option value="1">1 design</option>
+        <option value="2" selected>2 designs (choose your favorite)</option>
+        <option value="3">3 designs (most variety)</option>
+      </select>
+    </div>
     <div class="field"><label>Upload Logo (optional)</label>
-      <div class="upload-zone" onclick="document.getElementById('fl-logo').click()"><div style="font-size:24px;margin-bottom:5px;">🖼️</div><div>Tap to upload your logo</div><input type="file" id="fl-logo" style="display:none;" accept="image/*" onchange="handleLogo(event)"/></div>
+      <div class="upload-zone" onclick="document.getElementById('fl-logo').click()">
+        <div style="font-size:22px;margin-bottom:4px;">🖼️</div><div>Tap to upload your logo</div>
+        <input type="file" id="fl-logo" style="display:none;" accept="image/*" onchange="handleLogo(event)"/>
+      </div>
       <div id="fl-logo-prev" style="display:none;margin-top:8px;"><img id="fl-logo-img" style="max-height:50px;border-radius:5px;"/> <span style="font-size:11px;color:var(--muted);margin-left:8px;">Logo ready ✓</span></div>
     </div>
-    <div class="brow"><button class="btn btn-p" onclick="genFlyer()">✨ Create Flyer Preview</button></div>
+    <div class="brow">
+      <button class="btn btn-p" onclick="genFlyer()">✨ Generate Flyer Previews</button>
+      <button class="btn btn-s" onclick="resetFlyer()">🔄 Reset All</button>
+    </div>
   </div>
-  <div id="fl-out" style="display:none;"><div id="fl-canvas"></div><div class="brow"><button class="btn btn-s" onclick="navigator.clipboard.writeText(g('fl-canvas').innerText)">📋 Copy Text</button><button class="btn btn-p" onclick="sp('Export this flyer as a printable PDF file')">⬇ Export PDF ↗</button></div></div>
+
+  <!-- PREVIEWS OUTPUT -->
+  <div id="fl-out" style="display:none;">
+    <div class="card" style="border-color:#00e07a;">
+      <div class="ctitle" style="color:#00e07a;">✅ Your Flyer Previews — Choose Your Favorite</div>
+      <div id="fl-previews" style="display:grid;gap:18px;"></div>
+    </div>
+    <!-- EDIT / REVISION SECTION -->
+    <div class="card" style="border-color:var(--gold);">
+      <div class="ctitle">✏️ Request Changes to a Design</div>
+      <div class="field"><label>Which design? (enter number)</label>
+        <select id="fl-edit-which">
+          <option value="1">Design 1</option>
+          <option value="2">Design 2</option>
+          <option value="3">Design 3</option>
+        </select>
+      </div>
+      <div class="field"><label>What do you want to change? (type exactly what you want)</label>
+        <textarea id="fl-feedback" style="min-height:80px;" placeholder="Examples:&#10;• Make the artist names much bigger&#10;• Move the date/venue to the top&#10;• Change the background to dark purple&#10;• Make the event name font larger and bolder&#10;• Add gold sparkles to the background&#10;• Put Farha Anwar's name first and make it stand out more&#10;• Remove the sponsors section&#10;• Make it look more like the Azadi Mela 2024 flyer style"></textarea>
+      </div>
+      <div class="brow">
+        <button class="btn btn-p" onclick="reviseFlyer()">✨ Apply Changes & Regenerate</button>
+        <button class="btn btn-s" onclick="genFlyer()">🔄 Generate All New Designs</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- SOCIAL -->
 <div class="panel" id="panel-social">
   <div class="ptitle">📱 Social Media Posts</div>
-  <div class="psub">Ready-to-post captions for Facebook, Instagram, and TikTok.</div>
+  <div class="psub">Generate, preview, and edit captions for Facebook, Instagram, and TikTok.</div>
   <div class="card">
     <div class="frow"><div class="field"><label>Event Name</label><input type="text" id="sm-ev" placeholder="Pakistan Azadi Mela 2026"/></div><div class="field"><label>Event Date</label><input type="date" id="sm-date"/></div></div>
     <div class="field"><label>Venue</label><input type="text" id="sm-venue" placeholder="Coral Springs Center for the Arts"/></div>
@@ -275,22 +409,60 @@ select option{background:#0f0020;}
       <div class="field"><label>Post Type</label><select id="sm-type"><option>Event Announcement</option><option>Artist Reveal</option><option>Countdown — 1 Week Away</option><option>Countdown — Tomorrow!</option><option>Day-Of Hype Post</option><option>Post-Event Thank You</option><option>Ticket Sales Reminder</option><option>Sponsor Shoutout</option></select></div>
       <div class="field"><label>Platforms</label><select id="sm-platform"><option>All — Facebook, Instagram & TikTok</option><option>Facebook only</option><option>Instagram only</option><option>TikTok only</option></select></div>
     </div>
-    <div class="field"><label>Extra Details (optional)</label><textarea id="sm-notes" placeholder="Free admission, VIP tables available, tag friends..."></textarea></div>
-    <div class="brow"><button class="btn btn-p" onclick="genSocial()">✨ Generate Posts</button><button class="btn btn-s" onclick="clr(['sm-ev','sm-venue','sm-artists','sm-notes']);g('sm-out').innerHTML=''">Clear</button></div>
+    <div class="field"><label>Extra Details (optional)</label><textarea id="sm-notes" placeholder="Free admission, VIP tables available, tag friends, mention sponsors..."></textarea></div>
+    <div class="brow"><button class="btn btn-p" onclick="genSocial()">✨ Generate & Preview Posts</button><button class="btn btn-s" onclick="clr(['sm-ev','sm-venue','sm-artists','sm-notes']);g('sm-out').innerHTML=''">Clear</button></div>
   </div>
+
+  <!-- INTEGRATION INFO BOX -->
+  <div class="card" style="border-color:#4a0088;">
+    <div class="ctitle" style="color:#b080ff;">🔗 Connect Your Social Media Accounts</div>
+    <div style="font-size:13px;color:#ddd;line-height:1.8;margin-bottom:14px;">
+      This app generates and previews your captions. To <strong style="color:var(--gold);">post directly</strong> to your accounts, use one of these free tools — they connect all your platforms in one place:
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px;">
+      <div style="background:#0a001a;border:1px solid #3a0068;border-radius:9px;padding:14px;text-align:center;">
+        <div style="font-size:22px;margin-bottom:6px;">📘</div>
+        <div style="font-size:12px;font-weight:700;color:var(--gold);">Meta Business Suite</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px;">Free — Schedule posts to Facebook & Instagram together</div>
+        <div style="font-size:10px;color:#4ab4ff;margin-top:6px;">business.facebook.com</div>
+      </div>
+      <div style="background:#0a001a;border:1px solid #3a0068;border-radius:9px;padding:14px;text-align:center;">
+        <div style="font-size:22px;margin-bottom:6px;">🎵</div>
+        <div style="font-size:12px;font-weight:700;color:var(--gold);">TikTok Business Center</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px;">Free — Schedule & manage TikTok posts</div>
+        <div style="font-size:10px;color:#4ab4ff;margin-top:6px;">ads.tiktok.com</div>
+      </div>
+      <div style="background:#0a001a;border:1px solid #3a0068;border-radius:9px;padding:14px;text-align:center;">
+        <div style="font-size:22px;margin-bottom:6px;">📅</div>
+        <div style="font-size:12px;font-weight:700;color:var(--gold);">Buffer (Free Plan)</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px;">Schedule all 3 platforms from one dashboard</div>
+        <div style="font-size:10px;color:#4ab4ff;margin-top:6px;">buffer.com</div>
+      </div>
+    </div>
+    <div style="font-size:12px;color:var(--muted);line-height:1.7;">
+      <strong style="color:var(--text);">How to use:</strong> Generate your caption below → click <strong>Copy</strong> on the platform card → paste it into Meta Business Suite, TikTok Business Center, or Buffer → add your photo/video → schedule or post!
+    </div>
+  </div>
+
   <div id="sm-out"></div>
 </div>
 
 <!-- AGENDA -->
 <div class="panel" id="panel-agenda">
   <div class="ptitle">📋 Event Agenda Builder</div>
-  <div class="psub">Build your full run-of-show based on your real event format.</div>
+  <div class="psub">Build your complete run-of-show with timing, breaks, and special instructions.</div>
   <div class="card">
     <div class="frow"><div class="field"><label>Event Name</label><input type="text" id="ag-ev" placeholder="Pakistan Azadi Mela 2026"/></div><div class="field"><label>Date & Start Time</label><input type="text" id="ag-time" placeholder="Saturday, August 14, 2026 — 7:30 PM"/></div></div>
-    <div class="field"><label>Artists Performing (in order)</label><textarea id="ag-artists" placeholder="Inzi DX, Jawad Kahlown&#10;Farha Anwar&#10;Atif Aslam" style="min-height:70px;"></textarea></div>
-    <div class="field"><label>Chief Guests / Speakers</label><textarea id="ag-guests" placeholder="FBI Director&#10;Chief of Police Daniel Ransone&#10;Ambassador&#10;Deputy Mayor" style="min-height:65px;"></textarea></div>
-    <div class="field"><label>Special Segments</label><textarea id="ag-special" placeholder="Flag Ceremony, Shield Presentations, Kids Performances, National Anthems, Certificate Presentations..." style="min-height:60px;"></textarea></div>
-    <div class="brow"><button class="btn btn-p" onclick="genAgenda()">✨ Build Agenda</button></div>
+    <div class="field"><label>Artists Performing (in order, one per line)</label><textarea id="ag-artists" placeholder="Inzi DX & Jawad Kahlown (opening act)&#10;Farha Anwar&#10;Atif Aslam (headliner — 45 min set)" style="min-height:75px;"></textarea></div>
+    <div class="field"><label>Chief Guests / Speakers (one per line)</label><textarea id="ag-guests" placeholder="FBI Director&#10;Chief of Police Daniel Ransone&#10;Ambassador&#10;Deputy Mayor Neil Kerch" style="min-height:65px;"></textarea></div>
+    <div class="field"><label>Special Segments</label><textarea id="ag-special" placeholder="Flag Ceremony, Shield Presentations, Kids Performances, National Anthems (Pakistan + USA), Certificate Presentations, Raffle Draw..." style="min-height:60px;"></textarea></div>
+    <div class="field"><label>⏱ Timing & Special Instructions <span style="color:var(--muted);font-weight:400;">(breaks, transitions, stage changeovers, etc.)</span></label>
+      <textarea id="ag-timing" placeholder="- 15 min break between each major performer&#10;- 10 min stage changeover time between acts&#10;- 5 min buffer after each speech before next segment&#10;- Intermission: 20 min break around 9:00 PM for food&#10;- Sound check must finish by 6:30 PM before doors open&#10;- VIP reception: 6:00–7:00 PM (before general admission)&#10;- Any special slots or custom timing goes here..." style="min-height:100px;"></textarea>
+    </div>
+    <div class="field"><label>Additional Notes for the MC / Coordinator</label>
+      <textarea id="ag-notes" placeholder="MC should announce sponsors between acts. Remind audience to follow social media. Flag ceremony must happen exactly at 8:14 PM (Pakistan Independence time)..." style="min-height:65px;"></textarea>
+    </div>
+    <div class="brow"><button class="btn btn-p" onclick="genAgenda()">✨ Build Agenda</button><button class="btn btn-s" onclick="clr(['ag-ev','ag-time','ag-artists','ag-guests','ag-special','ag-timing','ag-notes']);g('ag-out').innerHTML=''">Clear</button></div>
   </div>
   <div id="ag-out"></div>
 </div>
@@ -369,14 +541,39 @@ select option{background:#0f0020;}
 
 <!-- CERT -->
 <div class="panel" id="panel-cert">
-  <div class="ptitle">🏅 Certificate of Appreciation</div>
-  <div class="psub">Based on your real Azadi Mela certificate — green, gold, Pakistan flag, signed by Talha Ali & Liaquat Ali.</div>
+  <div class="ptitle">🏅 Certificates of Appreciation</div>
+  <div class="psub">Generate one certificate or hundreds at once — based on your real Azadi Mela design.</div>
   <div class="card">
-    <div class="field"><label>Recipient Name</label><input type="text" id="c-name" placeholder="e.g. Aiza Imran"/></div>
-    <div class="frow"><div class="field"><label>Event Name</label><input type="text" id="c-ev" placeholder="Annual Pakistani Azadi Mela 2026"/></div><div class="field"><label>Event Date</label><input type="date" id="c-date"/></div></div>
-    <div class="field"><label>Reason / For</label><textarea id="c-reason" placeholder="For Participation in the Annual Pakistani Azadi Mela 2026 at Coral Springs Center for the Arts hosted by TA Entertainment & A-1 Foods. Thank you for your efforts in representing Pakistan to the Pakistan-American community."></textarea></div>
-    <div class="field"><label>Venue</label><input type="text" id="c-venue" placeholder="Coral Springs Center for the Arts"/></div>
-    <div class="brow"><button class="btn btn-p" onclick="genCert()">✨ Generate Certificate</button></div>
+    <div class="ibox">💡 <strong>Bulk mode:</strong> Enter one name per line to generate multiple certificates at once.</div>
+    <div class="field">
+      <label>Recipient Names — one name per line</label>
+      <textarea id="c-names" style="min-height:130px;" placeholder="Aiza Imran&#10;Zoya Imran&#10;Zara Imran&#10;Wali Hamid Ali Khan&#10;Farha Anwar&#10;(add as many names as you need)"></textarea>
+      <div style="font-size:11px;color:var(--muted);margin-top:5px;">💡 You can paste a list from Excel or Notes — one name per line</div>
+    </div>
+    <div class="frow"><div class="field"><label>Event Name</label><input type="text" id="c-ev" placeholder="Annual Pakistani Azadi Mela 2026" oninput="updateCertReason()"/></div><div class="field"><label>Event Date</label><input type="date" id="c-date"/></div></div>
+    <div class="field"><label>Venue</label><input type="text" id="c-venue" placeholder="Coral Springs Center for the Arts" oninput="updateCertReason()"/></div>
+    <div class="field"><label>Certificate Type</label>
+      <select id="c-type" onchange="updateCertReason()">
+        <option value="participation">Participation — General</option>
+        <option value="performance">Performance — Artist / Singer</option>
+        <option value="sponsorship">Sponsorship — Sponsor Recognition</option>
+        <option value="volunteer">Volunteer — Community Service</option>
+        <option value="achievement">Achievement — Special Honor</option>
+        <option value="custom">Custom (I will write my own reason below)</option>
+      </select>
+    </div>
+    <div class="field"><label>Certificate Reason <span style="color:var(--muted);font-weight:400;">(auto-filled — edit if needed)</span></label>
+      <textarea id="c-reason" style="min-height:80px;" placeholder="For Participation in the Annual Pakistani Azadi Mela 2026..."></textarea>
+    </div>
+    <div class="brow">
+      <button class="btn btn-p" onclick="genCerts()">✨ Generate All Certificates</button>
+      <button class="btn btn-s" onclick="clr(['c-names','c-reason']);g('c-out').innerHTML='';g('c-count').style.display='none';g('c-bulk-btns').style.display='none'">Clear All</button>
+    </div>
+  </div>
+  <div id="c-count" style="display:none;margin-bottom:12px;"></div>
+  <div id="c-bulk-btns" style="display:none;" class="brow">
+    <button class="btn btn-p" onclick="saveAllCerts()">💾 Save All to Desktop</button>
+    <button class="btn btn-s" onclick="window.print()">🖨 Print All</button>
   </div>
   <div id="c-out"></div>
 </div>
@@ -384,14 +581,24 @@ select option{background:#0f0020;}
 <!-- SHIELD -->
 <div class="panel" id="panel-shield">
   <div class="ptitle">🛡 Award Shields</div>
-  <div class="psub">Based on your real award categories from past festivals.</div>
+  <div class="psub">Generate shields for one recipient or many — based on your real award categories.</div>
   <div class="card">
     <div class="field"><label>Award Type</label><select id="sh-type"><option>Outstanding Sponsor Award</option><option>Outstanding Performance Award</option><option>Lifetime Achievement Award</option><option>Outstanding Support Award</option><option>Achievement Award</option><option>Community Service Award</option><option>Custom Award</option></select></div>
-    <div class="field"><label>Recipient Name</label><input type="text" id="sh-name" placeholder="e.g. Mian Tahir Ismail"/></div>
+    <div class="field">
+      <label>Recipient Names — one per line <span style="color:var(--muted);font-weight:400;">(bulk mode — enter as many as needed)</span></label>
+      <textarea id="sh-names" style="min-height:110px;" placeholder="Mian Tahir Ismail&#10;Shabeer Shekha — Guidance Residential&#10;Dr. Ahmed Khan&#10;Farha Anwar&#10;(add as many as you need)"></textarea>
+      <div style="font-size:11px;color:var(--muted);margin-top:4px;">💡 Each person gets their own individual award shield</div>
+    </div>
     <div class="frow"><div class="field"><label>Event Name</label><input type="text" id="sh-ev" placeholder="Pakistan Independence Day Festival 2026"/></div><div class="field"><label>Event Date</label><input type="date" id="sh-date"/></div></div>
-    <div class="field"><label>Award Description (optional)</label><textarea id="sh-reason" placeholder="In recognition of your continuous support and excellent community service..."></textarea></div>
-    <div class="brow"><button class="btn btn-p" onclick="genShield()">✨ Generate Award Shield</button></div>
+    <div class="field"><label>Award Description <span style="color:var(--muted);font-weight:400;">(applies to all recipients — edit if needed per person)</span></label>
+      <textarea id="sh-reason" placeholder="In recognition of your continuous support and excellent community service of the Pakistani-American community in South Florida, USA."></textarea>
+    </div>
+    <div class="brow">
+      <button class="btn btn-p" onclick="genShields()">✨ Generate All Award Shields</button>
+      <button class="btn btn-s" onclick="clr(['sh-names','sh-reason']);g('sh-out').innerHTML='';g('sh-count').style.display='none'">Clear</button>
+    </div>
   </div>
+  <div id="sh-count" style="display:none;margin-bottom:12px;"></div>
   <div id="sh-out"></div>
 </div>
 
@@ -430,19 +637,61 @@ select option{background:#0f0020;}
 <!-- VIDEO -->
 <div class="panel" id="panel-video">
   <div class="ptitle">🎬 Promo Video Builder</div>
-  <div class="psub">Add YouTube links for your artists — get a full production brief for TV commercials and Instagram Reels.</div>
+  <div class="psub">Add YouTube clips, your own song, and a voiceover script — get a complete production brief.</div>
   <div class="card">
     <div class="frow"><div class="field"><label>Video Title</label><input type="text" id="vt" placeholder="Pakistan Azadi Mela 2026 — Official Promo"/></div><div class="field"><label>Format</label><select id="vf"><option>Both TV Commercial (16:9) + Instagram Reel (9:16)</option><option>TV Commercial only (16:9)</option><option>Instagram Reel only (9:16 vertical)</option></select></div></div>
+    <div class="frow"><div class="field"><label>Video Length</label><select id="vl"><option>30 seconds (Reel)</option><option>60 seconds</option><option>2 minutes (TV)</option><option>30 sec Reel + 2 min TV version</option></select></div><div class="field"><label>Aspect Ratio Priority</label><select id="var"><option>Square (1:1) — works on all platforms</option><option>Vertical (9:16) — Instagram/TikTok first</option><option>Horizontal (16:9) — TV / YouTube first</option></select></div></div>
+
+    <div class="ctitle" style="margin-top:8px;">🎥 Artist / Event Clips</div>
     <div class="field"><label>YouTube Links — Paste link and press Add</label>
       <div style="display:flex;gap:8px;margin-bottom:8px;"><input type="text" id="yt-in" placeholder="https://youtube.com/watch?v=..." style="flex:1;" onkeydown="if(event.key==='Enter')addYT()"/><button class="btn btn-s" onclick="addYT()" style="white-space:nowrap;padding:9px 16px;">+ Add</button></div>
       <div class="ytbox" id="yt-box"><span style="color:#3a1a5a;font-size:12px;padding:3px;">No links added yet</span></div>
     </div>
-    <div class="frow"><div class="field"><label>Video Length</label><select id="vl"><option>30 seconds (Reel)</option><option>60 seconds</option><option>2 minutes (TV)</option><option>30 sec Reel + 2 min TV version</option></select></div><div class="field"><label>Music Style</label><select id="vm"><option>High Energy Bollywood / Filmi</option><option>Romantic Bollywood</option><option>Qawwali / Sufi</option><option>Modern Hip-Hop Beat</option><option>No added music — artist audio only</option></select></div></div>
+
+    <div class="ctitle" style="margin-top:8px;">🎵 Background Music</div>
+    <div class="field"><label>Music Option</label>
+      <select id="vm" onchange="toggleMusicUpload()">
+        <option value="style">Use a music style (AI will recommend)</option>
+        <option value="upload">Upload my own song file</option>
+        <option value="youtube">YouTube link for my song</option>
+        <option value="none">No background music — artist audio only</option>
+      </select>
+    </div>
+    <div id="vm-style-row" class="field"><label>Music Style</label><select id="vms"><option>High Energy Bollywood / Filmi</option><option>Romantic Bollywood</option><option>Qawwali / Sufi</option><option>Modern Punjabi / Bhangra</option><option>Classical Pakistani</option><option>Modern Hip-Hop Beat</option></select></div>
+    <div id="vm-upload-row" style="display:none;" class="field"><label>Upload Song File (MP3 / M4A)</label>
+      <div class="upload-zone" onclick="document.getElementById('v-song-file').click()">
+        <div style="font-size:22px;margin-bottom:4px;">🎵</div><div>Tap to upload your song</div>
+        <input type="file" id="v-song-file" style="display:none;" accept="audio/*" onchange="handleSongUpload(event)"/>
+      </div>
+      <div id="v-song-prev" style="display:none;margin-top:8px;font-size:12px;color:var(--green);">✅ Song ready: <span id="v-song-name"></span></div>
+    </div>
+    <div id="vm-yt-row" style="display:none;" class="field"><label>Song YouTube Link</label><input type="text" id="v-song-yt" placeholder="https://youtube.com/watch?v=... (your chosen song)"/></div>
+    <div class="field"><label>Song Start Time in Video</label><select id="vst"><option>From the very beginning</option><option>Start song after opening 5 seconds</option><option>Fade in slowly at 0:05</option><option>Start after title card (0:08)</option></select></div>
+
+    <div class="ctitle" style="margin-top:8px;">🎙 Voiceover</div>
+    <div class="field"><label>Include Voiceover?</label>
+      <select id="vvo" onchange="toggleVoiceover()">
+        <option value="no">No voiceover</option>
+        <option value="write">Yes — write my voiceover script for me</option>
+        <option value="custom">Yes — I will provide my own script</option>
+      </select>
+    </div>
+    <div id="vvo-lang-row" style="display:none;" class="field"><label>Voiceover Language</label>
+      <select id="vvo-lang"><option>English</option><option>Urdu</option><option>English + Urdu (bilingual)</option><option>Punjabi</option></select>
+    </div>
+    <div id="vvo-custom-row" style="display:none;" class="field"><label>Your Voiceover Script</label>
+      <textarea id="vvo-script" style="min-height:90px;" placeholder="Type exactly what you want the voiceover to say...&#10;&#10;Example: &#34;Join us for the biggest Pakistani celebration in South Florida! Pakistan Azadi Mela 2026 — featuring Atif Aslam LIVE. August 14th at Coral Springs Center for the Arts. Free admission for all. Don't miss it!&#34;"></textarea>
+    </div>
+    <div id="vvo-tone-row" style="display:none;" class="field"><label>Voiceover Tone</label>
+      <select id="vvo-tone"><option>Exciting & Energetic</option><option>Warm & Welcoming</option><option>Formal & Prestigious</option><option>Fun & Celebratory</option></select>
+    </div>
+
+    <div class="ctitle" style="margin-top:8px;">📝 On-Screen Text & Instructions</div>
     <div class="field"><label>Text to Show on Screen</label><textarea id="vtext" placeholder="Line 1: PAKISTAN AZADI MELA 2026&#10;Line 2: Featuring Atif Aslam • Rahat Fateh Ali Khan&#10;Line 3: August 14, 2026 | Coral Springs Center for the Arts&#10;Line 4: Free Admission | (954) 415-8269"></textarea></div>
-    <div class="field"><label>Special Instructions</label><textarea id="vspec" placeholder="Open with Pakistani flag waving, show crowd from past years, end with company logo..."></textarea></div>
-    <div class="brow"><button class="btn btn-p" onclick="genVideo()">🎬 Generate Production Brief</button><button class="btn btn-s" onclick="clearVideo()">Clear</button></div>
+    <div class="field"><label>Special Visual Instructions</label><textarea id="vspec" placeholder="Open with Pakistani flag waving, show crowd from past years, end with company logo, use green and white color scheme..."></textarea></div>
+    <div class="brow"><button class="btn btn-p" onclick="genVideo()">🎬 Generate Production Brief</button><button class="btn btn-s" onclick="clearVideo()">Clear All</button></div>
   </div>
-  <div id="v-out" style="display:none;"><div class="card"><div class="ctitle">Video Production Brief</div><div class="rbox" id="v-brief"></div><div class="brow"><button class="btn btn-s" onclick="navigator.clipboard.writeText(g('v-brief').textContent)">📋 Copy</button><button class="btn btn-p" onclick="sp('Save this video production brief to the event folder')">💾 Save ↗</button></div></div></div>
+  <div id="v-out" style="display:none;"><div class="card"><div class="ctitle">Video Production Brief</div><div class="rbox" id="v-brief"></div><div class="brow"><button class="btn btn-s" onclick="navigator.clipboard.writeText(g('v-brief').textContent)">📋 Copy</button><button class="btn btn-p" onclick="autoSaveText('Video-Brief-'+new Date().toISOString().slice(0,10)+'.txt',g('v-brief').textContent)">💾 Save to Desktop</button></div></div></div>
 </div>
 
 <!-- FILES -->
@@ -489,8 +738,49 @@ select option{background:#0f0020;}
 </div>
 
 <script>
-var co={name:'Asian Welfare Culture Society, Inc.',short:'AWCS'};
+// Company config — president per company
+var companies={
+  'Asian Welfare Culture Society, Inc.':{short:'AWCS',president:'Liaquat Ali',phone:'(954) 415-8269',email:'lali2900@aol.com',address:'5302 NW 99th Lane, Coral Springs, FL 33076'},
+  'TA Entertainment and Production':{short:'TA Ent.',president:'Talha Ali',phone:'(954) 415-8269',email:'lali2900@aol.com',address:'5302 NW 99th Lane, Coral Springs, FL 33076'}
+};
+var co={name:'Asian Welfare Culture Society, Inc.',short:'AWCS',president:'Liaquat Ali',phone:'(954) 415-8269',email:'lali2900@aol.com',address:'5302 NW 99th Lane, Coral Springs, FL 33076'};
 var ytLinks=[];var budgetItems=[];var letterType='';
+
+// ── AUTO-SAVE HELPERS ──
+// Since browsers cannot write directly to Desktop folders, we provide
+// a download that auto-names the file and shows the user where to save it.
+var SAVE_FOLDER='Claude Projects/Papa AI Assistant';var SAVE_BASE='/Users/tayyabaali/Desktop/';
+function autoSave(filename, content, type){
+  type=type||'text/html';
+  var blob=new Blob([content],{type:type});
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=filename;
+  // Show save toast
+  showToast('💾 Saving "'+filename+'" → Desktop/'+SAVE_FOLDER+'/');
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  setTimeout(function(){URL.revokeObjectURL(a.href);},5000);
+}
+function autoSaveText(filename,content){autoSave(filename,content,'text/plain');}
+function autoSaveHTML(filename,content){autoSave(filename,content,'text/html');}
+
+function showToast(msg){
+  var t=document.createElement('div');
+  t.style.cssText='position:fixed;bottom:24px;right:24px;background:#1c0038;border:1px solid var(--gold);color:var(--gold);padding:12px 18px;border-radius:10px;font-size:13px;font-family:Nunito,sans-serif;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,.5);max-width:340px;line-height:1.5;';
+  t.innerHTML=msg+'<br/><span style="font-size:10px;color:#9070bb;">→ '+SAVE_BASE+SAVE_FOLDER+'</span>';
+  document.body.appendChild(t);
+  setTimeout(function(){t.style.opacity='0';t.style.transition='opacity .5s';setTimeout(function(){document.body.removeChild(t);},600);},4000);
+}
+
+// Setup instructions shown once
+function showSetupInstructions(){
+  if(localStorage.getItem('papa-setup-done'))return;
+  var m=document.createElement('div');
+  m.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.85);display:flex;align-items:center;justify-content:center;z-index:9998;';
+  m.innerHTML='<div style="background:#160028;border:2px solid var(--gold);border-radius:16px;padding:28px 32px;max-width:480px;width:92%;font-family:Nunito,sans-serif;"><h2 style="font-family:Cinzel,serif;color:var(--gold);font-size:17px;margin-bottom:10px;">📁 One-Time Setup</h2><p style="font-size:13px;color:#ddd;line-height:1.7;margin-bottom:14px;">To keep all of Papa\'s files organized, please create these folders on your Mac Desktop right now:</p><div style="background:#090018;border-radius:8px;padding:12px 16px;font-family:monospace;font-size:13px;color:var(--gold);margin-bottom:16px;">/Users/tayyabaali/Desktop/<br/>└── Claude Projects<br/>&nbsp;&nbsp;&nbsp;&nbsp;└── Papa AI Assistant</div><p style="font-size:12px;color:#9070bb;margin-bottom:18px;">Every time the app saves a file, your browser will download it. Just move it into that folder. On Mac: open Finder → right-click Desktop → New Folder.</p><button onclick="localStorage.setItem(\'papa-setup-done\',\'1\');this.closest(\'div\').parentNode.remove();" style="background:linear-gradient(135deg,#FFD700,#FFA500);color:#07000f;border:none;border-radius:7px;padding:10px 22px;font-size:14px;font-weight:700;cursor:pointer;width:100%;">Got it — folders are ready ✓</button></div>';
+  document.body.appendChild(m);
+}
+
 function g(id){return document.getElementById(id);}
 function gv(id){var e=g(id);return e?e.value:'';}
 function nav(id,el){document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active');});document.querySelectorAll('.nbtn').forEach(function(b){b.classList.remove('active');});g('panel-'+id).classList.add('active');if(el)el.classList.add('active');}
@@ -499,13 +789,22 @@ function clr(ids){ids.forEach(function(id){var e=g(id);if(e)e.value='';});}
 function sp(t){if(window.sendPrompt)window.sendPrompt(t);}
 function openCo(){g('co-modal').classList.add('open');}
 function closeCo(){g('co-modal').classList.remove('open');}
-function selCo(name,short){co={name:name,short:short};g('co-short').textContent=short+' \u25bc';g('inv-co-disp').textContent=name;var ld=g('letter-co-display');if(ld)ld.textContent=name;closeCo();}
+function selCo(name,short){
+  var cfg=companies[name]||{short:short,president:'Liaquat Ali',phone:'(954) 415-8269',email:'lali2900@aol.com',address:'5302 NW 99th Lane, Coral Springs, FL 33076'};
+  co={name:name,short:cfg.short,president:cfg.president,phone:cfg.phone,email:cfg.email,address:cfg.address};
+  g('co-short').textContent=cfg.short+' \u25bc';
+  g('inv-co-disp').textContent=name;
+  var ld=g('letter-co-display');if(ld)ld.textContent=name+' (President: '+cfg.president+')';
+  closeCo();
+}
 function swTab(el,pId){var p=el.closest('.panel');p.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active');});p.querySelectorAll('.tpane').forEach(function(t){t.classList.remove('active');});el.classList.add('active');g(pId).classList.add('active');}
 function today(){return new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});}
 function fmtDate(val){if(!val)return'TBD';var d=new Date(val+'T00:00:00');return d.toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});}
 function fmtDateShort(val){if(!val)return'Upon Receipt';var d=new Date(val+'T00:00:00');return d.toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});}
 function strip(t){return t.replace(/```json|```/g,'').trim();}
+function coSign(){return '\n\nRespectfully,\n\n'+co.president+'\nPresident\n'+co.name+'\n'+co.address+'\nPhone: '+co.phone+' | Email: '+co.email;}
 async function claude(prompt,max){max=max||1200;var r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:max,messages:[{role:'user',content:prompt}]})});var d=await r.json();return d.content.map(function(c){return c.text||'';}).join('');}
+window.addEventListener('load',function(){showSetupInstructions();});
 
 async function generateTodo(){
   var out=g('todo-out');
@@ -529,17 +828,86 @@ async function generateTodo(){
 }
 function tog(cbId,ttId){var cb=g(cbId),tt=g(ttId);cb.classList.toggle('chk');cb.textContent=cb.classList.contains('chk')?'✓':'';tt.classList.toggle('done');}
 
+// ── FLYER STATE ──
+var flyerContacts=[];var flyerSponsors=[];var sponsorPhotoTemp=null;var flyerPreviews=[];
+
 function handleLogo(e){var f=e.target.files[0];if(!f)return;var r=new FileReader();r.onload=function(ev){g('fl-logo-img').src=ev.target.result;g('fl-logo-prev').style.display='block';};r.readAsDataURL(f);}
+function handleSponsorPhoto(e){var f=e.target.files[0];if(!f)return;var r=new FileReader();r.onload=function(ev){sponsorPhotoTemp=ev.target.result;g('fl-sp-photo-icon').textContent='✅';};r.readAsDataURL(f);}
+function addContact(){var name=gv('fl-cn-name').trim(),phone=gv('fl-cn-phone').trim(),role=gv('fl-cn-role').trim();if(!name||!phone){alert('Please enter a name and phone number.');return;}flyerContacts.push({name:name,phone:phone,role:role});renderContacts();g('fl-cn-name').value='';g('fl-cn-phone').value='';g('fl-cn-role').value='';}
+function removeContact(i){flyerContacts.splice(i,1);renderContacts();}
+function renderContacts(){var el=g('fl-contacts-list');if(!flyerContacts.length){el.innerHTML='<div style="font-size:12px;color:var(--muted);margin-bottom:8px;">No contacts added yet.</div>';return;}el.innerHTML=flyerContacts.map(function(c,i){return '<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:#0a001a;border-radius:7px;margin-bottom:6px;font-size:13px;"><span style="flex:1;"><strong style="color:var(--gold);">'+c.name+'</strong> — '+c.phone+(c.role?' <span style="color:var(--blue);font-size:11px;">('+c.role+')</span>':'')+'</span><span style="cursor:pointer;color:var(--red);font-size:15px;" onclick="removeContact('+i+')">✕</span></div>';}).join('');}
+function toggleSponsors(){g('fl-sponsors-section').style.display=gv('fl-sponsor-toggle')==='yes'?'block':'none';}
+function addSponsor(){var name=gv('fl-sp-name').trim(),title=gv('fl-sp-title').trim();if(!name){alert('Please enter a sponsor name.');return;}flyerSponsors.push({name:name,title:title,photo:sponsorPhotoTemp});sponsorPhotoTemp=null;g('fl-sp-photo-icon').textContent='📷';g('fl-sp-name').value='';g('fl-sp-title').value='';renderSponsors();}
+function removeSponsor(i){flyerSponsors.splice(i,1);renderSponsors();}
+function renderSponsors(){var el=g('fl-sponsors-list');el.innerHTML=flyerSponsors.map(function(s,i){return '<div style="text-align:center;background:#0a001a;border:1px solid var(--border);border-radius:9px;padding:10px 12px;min-width:90px;">'+(s.photo?'<img src="'+s.photo+'" style="width:46px;height:46px;border-radius:50%;object-fit:cover;border:2px solid var(--gold);display:block;margin:0 auto 5px;"/>'+'':'<div style="width:46px;height:46px;border-radius:50%;background:#2a0058;display:flex;align-items:center;justify-content:center;margin:0 auto 5px;font-size:18px;">👤</div>')+'<div style="font-size:11px;font-weight:700;color:var(--text);">'+s.name+'</div>'+(s.title?'<div style="font-size:9px;color:var(--gold);">'+s.title+'</div>':'')+'<div style="cursor:pointer;color:var(--red);font-size:11px;margin-top:4px;" onclick="removeSponsor('+i+')">✕ remove</div></div>';}).join('');}
+function resetFlyer(){flyerContacts=[];flyerSponsors=[];sponsorPhotoTemp=null;flyerPreviews=[];renderContacts();renderSponsors();['fl-ev','fl-subtitle','fl-time','fl-venue','fl-vaddr','fl-artists','fl-tickets','fl-price','fl-visual','fl-org'].forEach(function(id){if(g(id))g(id).value='';});if(g('fl-date'))g('fl-date').value='';if(g('fl-logo-prev'))g('fl-logo-prev').style.display='none';if(g('fl-artist-photos-prev'))g('fl-artist-photos-prev').innerHTML='';if(g('fl-sponsors-list'))g('fl-sponsors-list').innerHTML='';artistPhotoDataURLs=[];g('fl-out').style.display='none';}
+function buildFlyerHTML(d,idx,theme,styleType){
+  var themes={'green-gold':{bg:'linear-gradient(160deg,#0a2210 0%,#0d3318 40%,#041808 100%)',accent:'#FFD700',secondary:'#00cc44',text:'#ffffff',cardBg:'rgba(0,80,20,0.5)'},'blue-gold':{bg:'linear-gradient(160deg,#050a30 0%,#0a1060 40%,#030720 100%)',accent:'#FFD700',secondary:'#4ab4ff',text:'#ffffff',cardBg:'rgba(10,20,80,0.6)'},'purple-gold':{bg:'linear-gradient(160deg,#120020 0%,#2a0050 40%,#080010 100%)',accent:'#FFD700',secondary:'#cc88ff',text:'#ffffff',cardBg:'rgba(40,0,80,0.5)'},'red-gold':{bg:'linear-gradient(160deg,#1a0005 0%,#3a0010 40%,#0f0003 100%)',accent:'#FFD700',secondary:'#ff4455',text:'#ffffff',cardBg:'rgba(80,0,10,0.5)'},'dark-dramatic':{bg:'linear-gradient(160deg,#050505 0%,#111111 40%,#000000 100%)',accent:'#FFD700',secondary:'#ff9900',text:'#ffffff',cardBg:'rgba(255,215,0,0.08)'},'yellow-green':{bg:'linear-gradient(160deg,#1a2800 0%,#2d4400 40%,#0f1800 100%)',accent:'#FFD700',secondary:'#aaff00',text:'#ffffff',cardBg:'rgba(30,60,0,0.5)'}};
+  var t=themes[theme]||themes['green-gold'];
+  var artistNames=(gv('fl-artists')||'').split('\n').map(function(a){return a.trim();}).filter(Boolean);
+  var artistPhotos=artistPhotoDataURLs.filter(Boolean);
+  var logoEl=g('fl-logo-img');var hasLogo=logoEl&&logoEl.src&&logoEl.src.startsWith('data:');
+  var photosSection='';
+  if(artistPhotos.length){photosSection='<div style="display:flex;justify-content:center;flex-wrap:wrap;gap:10px;margin:14px 0;">';artistPhotos.forEach(function(src,i){var name=artistNames[i]||'';photosSection+='<div style="text-align:center;">'+(styleType==='circular-photos'?'<img src="'+src+'" style="width:72px;height:72px;object-fit:cover;border-radius:50%;border:3px solid '+t.accent+';display:block;margin:0 auto 5px;"/>':'<img src="'+src+'" style="width:80px;height:100px;object-fit:cover;border-radius:8px;border:2px solid '+t.accent+';display:block;margin:0 auto 5px;"/>')+(name?'<div style="font-size:10px;font-weight:700;color:'+t.accent+';text-transform:uppercase;max-width:82px;">'+name+'</div>':'')+'</div>';});photosSection+='</div>';}
+  var contactsHtml='';
+  if(flyerContacts.length){contactsHtml='<div style="margin-top:14px;border-top:1px solid '+t.accent+'40;padding-top:10px;"><div style="font-size:10px;color:'+t.accent+';text-transform:uppercase;letter-spacing:.12em;margin-bottom:6px;">For More Information</div><div style="display:flex;flex-wrap:wrap;justify-content:center;gap:14px;">';flyerContacts.forEach(function(c){contactsHtml+='<div style="text-align:center;font-size:12px;color:'+t.text+';">'+(c.role?'<div style="font-size:9px;color:'+t.accent+';text-transform:uppercase;margin-bottom:2px;">'+c.role+'</div>':'')+'<strong>'+c.name+'</strong><br/><span style="color:'+t.secondary+';">'+c.phone+'</span></div>';});contactsHtml+='</div></div>';}
+  var sponsorsHtml='';
+  if(flyerSponsors.length&&gv('fl-sponsor-toggle')==='yes'){sponsorsHtml='<div style="margin-top:14px;border-top:1px solid '+t.accent+'40;padding-top:10px;"><div style="font-size:10px;color:'+t.accent+';text-transform:uppercase;letter-spacing:.12em;margin-bottom:10px;">'+(d.sponsorLabel||'Main Sponsors')+'</div><div style="display:flex;flex-wrap:wrap;justify-content:center;gap:14px;">';flyerSponsors.forEach(function(s){sponsorsHtml+='<div style="text-align:center;">'+(s.photo?'<img src="'+s.photo+'" style="width:50px;height:50px;border-radius:50%;object-fit:cover;border:2px solid '+t.accent+';display:block;margin:0 auto 4px;"/>':'')+'<div style="font-size:11px;font-weight:700;color:'+t.text+';">'+s.name+'</div>'+(s.title?'<div style="font-size:9px;color:'+t.accent+';">'+s.title+'</div>':'')+'</div>';});sponsorsHtml+='</div></div>';}
+  var orgLine=gv('fl-org')?'<div style="font-size:11px;color:'+t.secondary+';margin-top:6px;">'+gv('fl-org')+'</div>':'';
+  var landmark=(theme==='green-gold'||theme==='yellow-green')?'<div style="margin-top:12px;opacity:0.25;font-size:28px;letter-spacing:4px;">🕌🏛🕌🏰🕌</div>':'';
+  return '<div style="background:'+t.bg+';border-radius:14px;padding:24px 20px;text-align:center;color:'+t.text+';position:relative;overflow:hidden;min-height:320px;border:2px solid '+t.accent+'40;"><div style="position:absolute;inset:0;background:radial-gradient(ellipse at 20% 20%,'+t.accent+'08 0%,transparent 50%);pointer-events:none;"></div><div style="position:relative;z-index:1;">'+(hasLogo?'<img src="'+logoEl.src+'" style="max-height:44px;border-radius:5px;margin-bottom:8px;display:block;margin-left:auto;margin-right:auto;"/>':'')+'<div style="font-size:11px;font-weight:700;color:'+t.accent+';letter-spacing:.15em;text-transform:uppercase;margin-bottom:4px;">'+co.name+' PRESENTS</div>'+(d.subtitle?'<div style="font-size:10px;color:'+t.secondary+';letter-spacing:.1em;margin-bottom:6px;">'+d.subtitle+'</div>':'')+'<div style="font-family:Cinzel,serif;font-size:24px;font-weight:900;color:'+t.accent+';line-height:1.15;margin-bottom:6px;text-shadow:0 2px 8px rgba(0,0,0,.5);">'+(d.headline||gv('fl-ev')||'EVENT')+'</div>'+(d.tagline?'<div style="font-size:11px;color:'+t.secondary+';font-style:italic;margin-bottom:10px;">'+d.tagline+'</div>':'')+photosSection+(artistPhotos.length===0?'<div style="font-size:15px;font-weight:700;color:'+t.text+';line-height:1.8;margin:10px 0;">'+(gv('fl-artists')||'').replace(/\n/g,'<br/>')+'</div>':'')+'<div style="background:'+t.cardBg+';border:1px solid '+t.accent+'60;border-radius:9px;padding:12px 16px;margin:12px 0;"><div style="font-size:18px;font-weight:900;color:'+t.accent+';">'+(d.dateStr||fmtDate(gv('fl-date')))+'</div>'+(gv('fl-time')?'<div style="font-size:13px;color:'+t.text+';">⏰ '+gv('fl-time')+'</div>':'')+'<div style="font-size:13px;color:'+t.text+';margin-top:4px;">'+(gv('fl-venue')||'')+'</div>'+(gv('fl-vaddr')?'<div style="font-size:11px;color:'+t.secondary+';">'+gv('fl-vaddr')+'</div>':'')+(gv('fl-tickets')?'<div style="font-size:13px;color:'+t.accent+';font-weight:700;margin-top:5px;">'+gv('fl-tickets')+'</div>':'')+(gv('fl-price')?'<div style="font-size:12px;color:'+t.secondary+';">'+gv('fl-price')+'</div>':'')+'</div>'+sponsorsHtml+contactsHtml+orgLine+landmark+'</div></div>';
+}
 async function genFlyer(){
-  var ev=gv('fl-ev')||'Pakistan Azadi Mela 2026';
+  var numDesigns=parseInt(gv('fl-count'))||2;
   g('fl-out').style.display='block';
-  g('fl-canvas').innerHTML='<div class="flyer-wrap"><div class="loading" style="padding:40px;">✨ Designing your flyer...</div></div>';
-  var prompt='Write compelling flyer copy for a large Pakistani/Bollywood concert event in South Florida. Company: '+co.name+', Event: '+ev+', Date: '+fmtDate(gv('fl-date'))+', Venue: '+(gv('fl-venue')||'Coral Springs Center for the Arts')+', Artists: '+(gv('fl-artists')||'TBD')+', Entry: '+(gv('fl-tickets')||'Free Admission')+', Contact: '+(gv('fl-contact')||'(954) 415-8269')+'. Return ONLY JSON: {"headline":string,"tagline":string,"artists":string,"dateStr":string,"venue":string,"entry":string,"cta":string,"contact":string}';
+  var previewsEl=g('fl-previews');
+  previewsEl.innerHTML='<div class="loading" style="padding:30px;text-align:center;grid-column:1/-1;">✨ Generating '+numDesigns+' flyer design'+(numDesigns>1?'s':'')+' for you...</div>';
+  previewsEl.style.gridTemplateColumns=numDesigns===1?'1fr':numDesigns===2?'1fr 1fr':'1fr 1fr 1fr';
+  var theme=gv('fl-theme');var styleType=gv('fl-style');
+  var contactStr=flyerContacts.map(function(c){return c.name+' '+c.phone+(c.role?' ('+c.role+')':'');}).join(', ')||'Liaquat Ali (954) 415-8269';
+  var sponsorStr=flyerSponsors.map(function(s){return s.name+(s.title?' ('+s.title+')':'');}).join(', ')||'none';
+  var themeVariants=[theme,theme==='green-gold'?'blue-gold':'green-gold',theme==='purple-gold'?'red-gold':'purple-gold'];
+  var prompts=[];
+  for(var i=0;i<numDesigns;i++){
+    prompts.push('Create flyer variation '+(i+1)+' of '+numDesigns+' for Pakistani event. Company: '+co.name+', Event: '+(gv('fl-ev')||'Pakistan Azadi Mela 2026')+', Sub-title: '+(gv('fl-subtitle')||'')+', Date: '+fmtDate(gv('fl-date'))+', Artists: '+(gv('fl-artists')||'')+', Entry: '+(gv('fl-tickets')||'Free Admission')+', Sponsors: '+sponsorStr+', Theme: '+theme+', Style notes: '+(gv('fl-visual')||'standard festive design')+'. Variation '+(i+1)+': make this '+(i===0?'a clean primary design':i===1?'a more dramatic/bold alternative':'a creative third option')+'. Return ONLY JSON: {"headline":string,"tagline":string,"subtitle":string,"artists":string,"dateStr":string,"sponsorLabel":string}');
+  }
   try{
-    var t=await claude(prompt);var d=JSON.parse(strip(t));
-    var logoEl=g('fl-logo-img');var hasLogo=logoEl&&logoEl.src&&logoEl.src.startsWith('data:');
-    g('fl-canvas').innerHTML='<div class="flyer-wrap">'+(hasLogo?'<img src="'+logoEl.src+'" style="max-height:55px;margin-bottom:14px;border-radius:5px;"/>':"<div style=\"font-family:'Cinzel',serif;font-size:13px;color:var(--gold);letter-spacing:.1em;margin-bottom:14px;\">"+co.name+'</div>')+'<div class="f-tag">'+(d.tagline||'')+'</div><div class="f-hl">'+(d.headline||ev)+'</div><div class="f-div"></div><div class="f-artists">'+(d.artists||'').replace(/\\n/g,'<br/>')+'</div><div class="f-div"></div><div class="f-det"><strong style="color:#fff;font-size:15px;">'+(d.dateStr||'')+'</strong><br/>'+(d.venue||'')+'<br/><span style="color:var(--gold);">'+(d.entry||'')+'</span></div><div class="f-cta">'+(d.cta||'')+'</div><div class="f-contact">'+(d.contact||'')+'</div></div>';
-  }catch(e){g('fl-canvas').innerHTML='<div class="flyer-wrap" style="color:var(--red);">⚠️ Could not generate. Please try again.</div>';}
+    var results=await Promise.all(prompts.map(function(p){return claude(p);}));
+    flyerPreviews=results.map(function(r){try{return JSON.parse(strip(r));}catch(e){return {headline:gv('fl-ev')||'EVENT',tagline:'',artists:gv('fl-artists')||'',dateStr:fmtDate(gv('fl-date')),subtitle:gv('fl-subtitle')||'',sponsorLabel:'Main Sponsors'};}});
+    previewsEl.innerHTML='';
+    flyerPreviews.forEach(function(d,i){
+      var wrap=document.createElement('div');
+      wrap.innerHTML='<div style="margin-bottom:8px;font-size:11px;font-weight:700;color:var(--gold);text-align:center;">Design '+(i+1)+'</div>'+buildFlyerHTML(d,i+1,themeVariants[i]||theme,styleType)+'<div class="brow" style="margin-top:10px;justify-content:center;"><button class="btn btn-p" style="font-size:12px;padding:7px 16px;" onclick="selectDesign('+(i+1)+')">✅ Choose Design '+(i+1)+'</button><button class="btn btn-s" style="font-size:12px;padding:7px 14px;" onclick="saveFlyer('+(i+1)+')">💾 Save</button></div>';
+      previewsEl.appendChild(wrap);
+    });
+    if(g('fl-edit-which'))g('fl-edit-which').innerHTML=flyerPreviews.map(function(_,i){return '<option value="'+(i+1)+'">Design '+(i+1)+'</option>';}).join('');
+  }catch(e){previewsEl.innerHTML='<div style="color:var(--red);padding:20px;grid-column:1/-1;">⚠️ Could not generate. Please try again.</div>';}
+}
+function selectDesign(num){showToast('✅ Design '+num+' selected! Use "Request Changes" below to refine, or Save to Desktop.');}
+function saveFlyer(num){var idx=num-1;if(!flyerPreviews[idx]){alert('Generate designs first.');return;}autoSaveText('Flyer-Design-'+num+'-'+((gv('fl-ev')||'event').replace(/[^a-zA-Z0-9]/g,'-'))+'.txt','FLYER DESIGN '+num+'\n\n'+JSON.stringify(flyerPreviews[idx],null,2));}
+async function reviseFlyer(){
+  var which=parseInt(gv('fl-edit-which'))||1;
+  var feedback=gv('fl-feedback');
+  if(!feedback.trim()){alert('Please describe what changes you want.');return;}
+  if(!flyerPreviews.length){alert('Please generate designs first.');return;}
+  var idx=which-1;var theme=gv('fl-theme');var styleType=gv('fl-style');
+  var previewsEl=g('fl-previews');
+  var wrap=previewsEl.children[idx];
+  if(wrap){wrap.querySelector('div[style]').innerHTML='<div class="loading" style="padding:30px;text-align:center;">✨ Applying your changes to Design '+which+'...</div>';}
+  var d=flyerPreviews[idx]||{};
+  var prompt='Revise Pakistani event flyer. Current: '+JSON.stringify(d)+'. User feedback: "'+feedback+'". Event: '+(gv('fl-ev')||'')+', Artists: '+(gv('fl-artists')||'')+', Date: '+fmtDate(gv('fl-date'))+'. Apply changes and return ONLY JSON: {"headline":string,"tagline":string,"subtitle":string,"artists":string,"dateStr":string,"sponsorLabel":string}';
+  try{
+    var t=await claude(prompt);var updated=JSON.parse(strip(t));
+    flyerPreviews[idx]=updated;
+    var newTheme=theme;
+    var fb=feedback.toLowerCase();
+    if(fb.indexOf('purple')>=0)newTheme='purple-gold';else if(fb.indexOf('blue')>=0)newTheme='blue-gold';else if(fb.indexOf('red')>=0)newTheme='red-gold';else if(fb.indexOf('dark')>=0)newTheme='dark-dramatic';
+    var newStyle=styleType;
+    if(fb.indexOf('circular')>=0)newStyle='circular-photos';else if(fb.indexOf('bold')>=0)newStyle='bold-concert';
+    if(wrap){wrap.innerHTML='<div style="margin-bottom:8px;font-size:11px;font-weight:700;color:#00e07a;text-align:center;">Design '+which+' (Updated ✓)</div>'+buildFlyerHTML(updated,which,newTheme,newStyle)+'<div class="brow" style="margin-top:10px;justify-content:center;"><button class="btn btn-p" style="font-size:12px;padding:7px 16px;" onclick="selectDesign('+which+')">✅ Choose Design '+which+'</button><button class="btn btn-s" style="font-size:12px;padding:7px 14px;" onclick="saveFlyer('+which+')">💾 Save</button></div>';}
+    g('fl-feedback').value='';
+    showToast('✅ Design '+which+' updated!');
+  }catch(e){if(wrap)wrap.innerHTML='<div style="color:var(--red);padding:20px;">⚠️ Could not apply changes. Please try again.</div>';}
 }
 
 async function genSocial(){
@@ -557,7 +925,9 @@ async function genAgenda(){
   try{
     var t=await claude(prompt);var items=JSON.parse(strip(t));
     var ev=gv('ag-ev')||'Pakistan Azadi Mela 2026';
-    out.innerHTML='<div class="agenda-wrap"><div class="agenda-title">'+ev+' — Run of Show</div>'+items.map(function(i){return '<div class="agenda-item"><div class="agenda-time">'+i.time+'</div><div class="agenda-act"><strong>'+i.item+'</strong>'+(i.duration?' <span style="color:#999;font-size:11px;">('+i.duration+')</span>':'')+(i.notes?'<br/><span style="font-size:11px;color:#888;">'+i.notes+'</span>':'')+'</div></div>';}).join('')+'</div><div class="brow"><button class="btn btn-s" onclick="navigator.clipboard.writeText(document.querySelector(\'.agenda-wrap\').innerText)">📋 Copy Agenda</button><button class="btn btn-p" onclick="sp(\'Save this agenda as a Word document to the event folder\')">💾 Save as Doc ↗</button></div>';
+    var agendaText=ev+' — Run of Show\n\n'+items.map(function(i){return i.time+'\t'+i.item+(i.duration?' ('+i.duration+')':'')+(i.notes?'\n\t'+i.notes:'');}).join('\n');
+    autoSaveText('Agenda-'+ev.replace(/\W/g,'-')+'.txt',agendaText);
+    out.innerHTML='<div class="agenda-wrap"><div class="agenda-title">'+ev+' — Run of Show</div>'+items.map(function(i){return '<div class="agenda-item"><div class="agenda-time">'+i.time+'</div><div class="agenda-act"><strong>'+i.item+'</strong>'+(i.duration?' <span style="color:#999;font-size:11px;">('+i.duration+')</span>':'')+(i.notes?'<br/><span style="font-size:11px;color:#888;">'+i.notes+'</span>':'')+'</div></div>';}).join('')+'</div><div class="brow"><button class="btn btn-s" onclick="navigator.clipboard.writeText(document.querySelector(\'.agenda-wrap\').innerText)">📋 Copy Agenda</button><button class="btn btn-p" onclick="autoSaveText(\'Agenda-'+ev.replace(/\W/g,'-')+'.txt\',document.querySelector(\'.agenda-wrap\').innerText)">💾 Save to Desktop</button></div>';
   }catch(e){out.innerHTML='<div class="card" style="color:var(--red);">⚠️ Could not generate. Please try again.</div>';}
 }
 
@@ -582,8 +952,8 @@ var letterCfgs={
 function setLetter(type){letterType=type;var cfg=letterCfgs[type];g('letter-form-title').textContent=cfg.title;g('letter-fields').innerHTML=cfg.fields;g('letter-co-display').textContent=co.name;g('letter-form').style.display='block';g('letter-out').innerHTML='';g('letter-form').scrollIntoView({behavior:'smooth'});}
 function getFields(){var f=[null];for(var i=1;i<=8;i++){var e=g('lf-'+i);f.push(e?e.value:'');}return f;}
 function buildPrompt(f){
-  var c=co.name;var sign='\n\nSigned by:\nLiaquat Ali\nPresident\n'+c+'\n5302 NW 99th Lane, Coral Springs, FL 33076\nPhone: (954) 415-8269 | Email: lali2900@aol.com';
-  var base='You are a professional letter writer for '+c+', a Pakistani-American organization in South Florida run by Liaquat Ali (President) that has organized Pakistan Independence Day festivals for 27+ years at Coral Springs Center for the Arts, attracting 3,000+ people from all over Florida. Write a complete, professional letter exactly matching their real letter style. Today\'s date: '+today()+'. Always include today\'s date, proper salutation, 3-4 paragraphs, and signature block.'+sign+'\n\n';
+  var c=co.name;var sign=coSign();
+  var base='You are a professional letter writer for '+c+', a Pakistani-American organization in South Florida run by '+co.president+' (President) that has organized Pakistan Independence Day festivals for 27+ years at Coral Springs Center for the Arts, attracting 3,000+ people from all over Florida. Write a complete, professional letter exactly matching their real letter style. Today\'s date: '+today()+'. Always include today\'s date, proper salutation, 3-4 paragraphs, and the exact signature block below.'+sign+'\n\n';
   if(letterType==='chief-guest')return base+'Write a Chief Guest Invitation Letter to '+f[1]+' ('+f[2]+') for '+f[3]+' on '+fmtDate(f[4])+' at '+(f[5]||'Coral Springs Center for the Arts, 2855 Coral Springs Drive, Coral Springs, FL 33065 (954-344-5982)')+'. Notes: '+f[6]+'. Mention 27+ year history, 3,000+ attendees, presence of Chief of Police, Mayor, Ambassador. End with "Looking forward to seeing you here soon."';
   if(letterType==='visa-artist')return base+'Write a visa support letter to '+f[1]+' requesting visa for artist '+f[2]+' (Passport #'+f[3]+'). Artist: '+f[4]+'. Event: '+f[5]+' on '+fmtDate(f[6])+'. Include: 27+ year history, 3,000+ attendees, "We have hosted events at this venue for more than 11 years", "We will cover the airfare, accommodation, and expenses during their stay in Coral Springs, Florida."';
   if(letterType==='visa-personal')return base+'Write a personal visa invitation letter to '+f[1]+' for guest '+f[2]+' (Passport #'+f[3]+')'+( f[4]?' and '+f[4]:'')+'. Relationship: '+f[5]+'. Visit purpose: '+f[6]+'. State they will comply with US visa regulations and return before expiration.';
@@ -598,7 +968,9 @@ async function genLetter(){
   var out=g('letter-out');out.innerHTML='<div class="card"><div class="loading">✨ Writing your letter...</div></div>';
   try{
     var t=await claude(buildPrompt(getFields()),1200);
-    out.innerHTML='<div class="letter-doc"><div class="l-co">'+co.name+'</div><div style="white-space:pre-wrap;line-height:1.8;">'+t+'</div><div class="l-footer">5302 NW 99th Lane, Coral Springs, FL 33076 — Phone: (954) 415-8269 — Email: lali2900@aol.com</div></div><div class="brow"><button class="btn btn-s" onclick="navigator.clipboard.writeText(document.querySelector(\'.letter-doc\').innerText)">📋 Copy Letter</button><button class="btn btn-p" onclick="sp(\'Save this letter as a Word document to the current event folder\')">💾 Save as Doc ↗</button></div>';
+    var fname=(letterType+'-'+new Date().toISOString().slice(0,10)+'.txt').replace(/[^a-z0-9\-\.]/gi,'-');
+    autoSaveText(fname, co.name+'\n'+co.address+'\nPhone: '+co.phone+' | Email: '+co.email+'\n\n'+t);
+    out.innerHTML='<div class="letter-doc"><div class="l-co">'+co.name+'</div><div style="white-space:pre-wrap;line-height:1.8;">'+t+'</div><div class="l-footer">'+co.address+' — Phone: '+co.phone+' — Email: '+co.email+'</div></div><div class="brow"><button class="btn btn-s" onclick="navigator.clipboard.writeText(document.querySelector(\'.letter-doc\').innerText)">📋 Copy Letter</button><button class="btn btn-p" onclick="autoSaveText(\''+fname+'\',document.querySelector(\'.letter-doc\').innerText)">💾 Save to Desktop ↗</button></div>';
   }catch(e){out.innerHTML='<div class="card" style="color:var(--red);">⚠️ Could not generate. Please try again.</div>';}
 }
 
@@ -611,15 +983,81 @@ function genInvoice(){
     if(d&&a)items.push({d:d,q:q,a:a,total:q*a});
   });
   var sub=items.reduce(function(s,i){return s+i.total;},0);
-  g('inv-preview').innerHTML='<div class="inv-doc"><div class="inv-top"><div><div class="inv-co">'+coName+'</div><div class="inv-info">5302 NW 99th Lane, Coral Springs, FL 33076<br/>Phone: (954) 415-8269 &nbsp;|&nbsp; Email: lali2900@aol.com</div></div><div class="inv-right"><div class="inv-num-lbl">INVOICE</div><div class="inv-meta">'+num+'<br/>Date: '+today()+'<br/>Due: '+fmtDateShort(due)+'</div></div></div>'+(ev?'<div><span class="inv-badge">Event: '+ev+'</span></div>':'')+'<div class="inv-parties"><div><div class="inv-lbl">From</div><div class="inv-pname">'+coName+'</div><div class="inv-pinfo">5302 NW 99th Lane<br/>Coral Springs, FL 33076</div></div><div><div class="inv-lbl">Bill To</div><div class="inv-pname">'+sp2+'</div><div class="inv-pinfo">'+(cn||'')+(cn?'<br/>':'')+(se||'')+(se?'<br/>':'')+(sa||'')+'</div></div></div><table class="inv-table"><thead><tr><th>Item Description</th><th style="text-align:center;">Qty</th><th style="text-align:right;">Amount</th><th style="text-align:right;">Total</th></tr></thead><tbody>'+(items.length?items.map(function(i){return '<tr><td>'+i.d+'</td><td style="text-align:center;">'+i.q+'</td><td style="text-align:right;">$'+i.a.toFixed(2)+'</td><td style="text-align:right;font-weight:700;">$'+i.total.toFixed(2)+'</td></tr>';}).join(''):'<tr><td colspan="4" style="color:#999;font-style:italic;">No items added</td></tr>')+'</tbody></table><div class="inv-totals"><div class="inv-tline">Subtotal: $'+sub.toFixed(2)+'</div><div class="inv-tline">Tax: $0.00</div><div class="inv-grand">Balance Due: $'+sub.toFixed(2)+'</div></div><div class="inv-footer">'+terms+'</div></div>';
+  g('inv-preview').innerHTML='<div class="inv-doc"><div class="inv-top"><div><div class="inv-co">'+coName+'</div><div class="inv-info">'+co.address+'<br/>Phone: '+co.phone+' &nbsp;|&nbsp; Email: '+co.email+'</div></div><div class="inv-right"><div class="inv-num-lbl">INVOICE</div><div class="inv-meta">'+num+'<br/>Date: '+today()+'<br/>Due: '+fmtDateShort(due)+'</div></div></div>'+(ev?'<div><span class="inv-badge">Event: '+ev+'</span></div>':'')+'<div class="inv-parties"><div><div class="inv-lbl">From</div><div class="inv-pname">'+coName+'</div><div class="inv-pinfo">'+co.address+'<br/>President: '+co.president+'</div></div><div><div class="inv-lbl">Bill To</div><div class="inv-pname">'+sp2+'</div><div class="inv-pinfo">'+(cn||'')+(cn?'<br/>':'')+(se||'')+(se?'<br/>':'')+(sa||'')+'</div></div></div><table class="inv-table"><thead><tr><th>Item Description</th><th style="text-align:center;">Qty</th><th style="text-align:right;">Amount</th><th style="text-align:right;">Total</th></tr></thead><tbody>'+(items.length?items.map(function(i){return '<tr><td>'+i.d+'</td><td style="text-align:center;">'+i.q+'</td><td style="text-align:right;">$'+i.a.toFixed(2)+'</td><td style="text-align:right;font-weight:700;">$'+i.total.toFixed(2)+'</td></tr>';}).join(''):'<tr><td colspan="4" style="color:#999;font-style:italic;">No items added</td></tr>')+'</tbody></table><div class="inv-totals"><div class="inv-tline">Subtotal: $'+sub.toFixed(2)+'</div><div class="inv-tline">Tax: $0.00</div><div class="inv-grand">Balance Due: $'+sub.toFixed(2)+'</div></div><div class="inv-footer">'+terms+'<br/>'+co.president+' | President | '+coName+'</div></div>';
+  autoSave('Invoice-'+num+'-'+sp2.replace(/\W/g,'-')+'.html', g('inv-preview').innerHTML, 'text/html');
   g('inv-btns').style.display='flex';
   swTab(document.querySelectorAll('#panel-invoice .tab')[1],'inv-p');
 }
 
-function genCert(){
-  var name=gv('c-name')||'[Recipient Name]';var ev=gv('c-ev')||'Annual Pakistani Azadi Mela 2026';var date=fmtDate(gv('c-date'));var venue=gv('c-venue')||'Coral Springs Center for the Arts';
-  var reason=gv('c-reason')||('For Participation in the '+ev+' at '+venue+' hosted by TA Entertainment & A-1 Foods. Thank you for your efforts in representing Pakistan to the Pakistan-American community.');
-  g('c-out').innerHTML='<div class="cert-wrap"><div style="font-size:28px;margin-bottom:10px;">🏆</div><div class="cert-title">Certificate</div><div class="cert-of">of Appreciation</div><div class="cert-pres">Proudly presented to:</div><div class="cert-name">'+name.toUpperCase()+'</div><div class="cert-body">'+reason+'</div><div class="cert-date">'+date+'</div><div class="cert-sigs"><div class="cert-sig"><strong>Talha Ali &amp; Liaquat Ali</strong>TA Entertainment and Production<br/>Asian Welfare Culture Society</div><div style="font-size:28px;">🇵🇰</div></div></div><div class="brow"><button class="btn btn-p" onclick="sp(\'Export this certificate as a printable PDF\')">⬇ Export PDF ↗</button></div>';
+var certReasons={
+  'participation':'For Participation in the [EVENT] at [VENUE] hosted by TA Entertainment & A-1 Foods. Thank you for your efforts in representing Pakistan to the Pakistan-American community.',
+  'performance':'In recognition of your outstanding performance at [EVENT] at [VENUE]. Your talent and dedication brought joy to thousands of Pakistani-Americans in South Florida.',
+  'sponsorship':'In sincere appreciation for your generous sponsorship of [EVENT] at [VENUE]. Your support makes this celebration possible for the entire Pakistani-American community of South Florida.',
+  'volunteer':'In grateful recognition of your dedicated volunteer service at [EVENT] at [VENUE]. Your selfless contributions helped make this celebration a great success.',
+  'achievement':'In recognition of your outstanding achievements and distinguished contributions to the Pakistani-American community, presented at [EVENT] at [VENUE].',
+  'custom':''
+};
+function updateCertReason(){
+  var type=gv('c-type');if(type==='custom')return;
+  var ev=gv('c-ev')||'Annual Pakistani Azadi Mela 2026';
+  var venue=gv('c-venue')||'Coral Springs Center for the Arts';
+  var r=(certReasons[type]||'').replace(/\[EVENT\]/g,ev).replace(/\[VENUE\]/g,venue);
+  if(g('c-reason'))g('c-reason').value=r;
+}
+function makeCertHTML(name,reason,date){
+  return '<div class="cert-wrap" style="margin-bottom:20px;page-break-after:always;">'+
+    '<div style="font-size:26px;margin-bottom:8px;">🏆</div>'+
+    '<div class="cert-title">Certificate</div>'+
+    '<div class="cert-of">of Appreciation</div>'+
+    '<div class="cert-pres">Proudly presented to:</div>'+
+    '<div class="cert-name">'+name.toUpperCase()+'</div>'+
+    '<div class="cert-body">'+reason+'</div>'+
+    '<div class="cert-date">'+date+'</div>'+
+    '<div class="cert-sigs">'+
+      '<div class="cert-sig"><strong>Talha Ali &amp; Liaquat Ali</strong>TA Entertainment and Production<br/>Asian Welfare Culture Society</div>'+
+      '<div style="font-size:26px;">\u{1F1F5}\u{1F1F0}</div>'+
+    '</div>'+
+  '</div>';
+}
+var allCertData=null;
+function genCerts(){
+  var namesRaw=gv('c-names');
+  var ev=gv('c-ev')||'Annual Pakistani Azadi Mela 2026';
+  var date=fmtDate(gv('c-date'));
+  var venue=gv('c-venue')||'Coral Springs Center for the Arts';
+  var names=namesRaw.split('\n').map(function(n){return n.trim();}).filter(function(n){return n.length>0;});
+  if(!names.length){alert('Please enter at least one name.');return;}
+  if(!gv('c-reason').trim()){updateCertReason();}
+  var reason=gv('c-reason')||('For Participation in the '+ev+' at '+venue+'. Thank you for representing Pakistan to the Pakistan-American community.');
+  reason=reason.replace(/\[EVENT\]/g,ev).replace(/\[VENUE\]/g,venue);
+  allCertData={names:names,reason:reason,date:date,ev:ev};
+  var out=g('c-out');
+  var html='';
+  names.forEach(function(name,i){
+    var safeName=name.replace(/[^a-zA-Z0-9 ]/g,'').replace(/ /g,'-');
+    var txtContent='CERTIFICATE OF APPRECIATION\n\nPresented to: '+name+'\n\n'+reason+'\n\n'+date+'\n\nTalha Ali & Liaquat Ali\nTA Entertainment and Production | Asian Welfare Culture Society';
+    html+='<div style="position:relative;">'+makeCertHTML(name,reason,date)+
+      '<div class="brow" style="margin-top:-8px;margin-bottom:20px;">'+
+        '<span style="font-size:12px;color:var(--muted);padding:6px 0;font-weight:700;">'+(i+1)+' of '+names.length+'</span>'+
+        '<button class="btn btn-s" style="font-size:12px;padding:6px 14px;" onclick="autoSaveText('Certificate-'+safeName+'.txt',''+txtContent.replace(/'/g,"\'")+'')">💾 Save This One</button>'+
+      '</div></div>';
+  });
+  out.innerHTML=html;
+  var countEl=g('c-count');
+  countEl.style.display='block';
+  countEl.className='ibox';
+  countEl.innerHTML='<strong>✅ '+names.length+' certificate'+(names.length>1?'s':'')+' generated!</strong> Recipients: '+names.join(' &nbsp;•&nbsp; ');
+  g('c-bulk-btns').style.display='flex';
+}
+function saveAllCerts(){
+  if(!allCertData||!allCertData.names){alert('Generate certificates first.');return;}
+  allCertData.names.forEach(function(name,i){
+    setTimeout(function(){
+      var safeName=name.replace(/[^a-zA-Z0-9 ]/g,'').replace(/ /g,'-');
+      autoSaveText('Certificate-'+safeName+'.txt','CERTIFICATE OF APPRECIATION\n\nPresented to: '+name+'\n\n'+allCertData.reason+'\n\n'+allCertData.date+'\n\nTalha Ali & Liaquat Ali\nTA Entertainment and Production | Asian Welfare Culture Society');
+    },i*500);
+  });
+  showToast('💾 Saving '+allCertData.names.length+' certificates to Downloads!');
 }
 
 function genShield(){
@@ -647,13 +1085,49 @@ function renderBudget(){
 function addYT(){var inp=g('yt-in');var val=inp.value.trim();if(!val||(val.indexOf('youtube')<0&&val.indexOf('youtu.be')<0)){alert('Please enter a valid YouTube link.');return;}ytLinks.push(val);renderYT();inp.value='';}
 function removeYT(i){ytLinks.splice(i,1);renderYT();}
 function renderYT(){var box=g('yt-box');if(!ytLinks.length){box.innerHTML='<span style="color:#3a1a5a;font-size:12px;padding:3px;">No links added yet</span>';return;}box.innerHTML=ytLinks.map(function(l,i){return '<div class="yttag">▶ '+l.substring(0,32)+'... <span class="ytx" onclick="removeYT('+i+')">✕</span></div>';}).join('');}
-async function genVideo(){
-  if(!ytLinks.length){alert('Please add at least one YouTube link.');return;}
-  var out=g('v-out'),brief=g('v-brief');out.style.display='block';brief.textContent='🎬 Creating production brief...';brief.className='rbox loading';
-  var prompt='You are a professional video producer for South Florida Pakistani-American events. Create a detailed production brief for '+co.name+' (Liaquat Ali).\nVideo: '+(gv('vt')||'Event Promo')+', Format: '+gv('vf')+', Length: '+gv('vl')+', Music: '+gv('vm')+', YouTube clips ('+ytLinks.length+'): '+ytLinks.map(function(l,i){return (i+1)+'. '+l;}).join(', ')+', Text overlays: '+(gv('vtext')||'none')+', Special: '+(gv('vspec')||'none')+'\nWrite complete brief: 1)CONCEPT & OPENING 2)CLIP GUIDE per YouTube link 3)SCENE TIMELINE 4)TEXT OVERLAY TIMING 5)AUDIO MIXING 6)EXPORT SETTINGS for each platform 7)FREE TOOLS RECOMMENDED 8)FINAL CHECKLIST';
-  try{var t=await claude(prompt,1400);brief.textContent=t;brief.className='rbox';}catch(e){brief.textContent='⚠️ Could not generate. Please try again.';brief.className='rbox';}
+function toggleMusicUpload(){
+  var v=gv('vm');
+  g('vm-style-row').style.display=v==='style'?'block':'none';
+  g('vm-upload-row').style.display=v==='upload'?'block':'none';
+  g('vm-yt-row').style.display=v==='youtube'?'block':'none';
 }
-function clearVideo(){ytLinks=[];renderYT();clr(['vt','vtext','vspec']);g('v-out').style.display='none';}
+function handleSongUpload(e){
+  var f=e.target.files[0];if(!f)return;
+  g('v-song-name').textContent=f.name;
+  g('v-song-prev').style.display='block';
+}
+function toggleVoiceover(){
+  var v=gv('vvo');
+  var show=v!=='no';
+  g('vvo-lang-row').style.display=show?'block':'none';
+  g('vvo-tone-row').style.display=show?'block':'none';
+  g('vvo-custom-row').style.display=v==='custom'?'block':'none';
+}
+async function genVideo(){
+  var out=g('v-out'),brief=g('v-brief');
+  out.style.display='block';brief.textContent='🎬 Creating your full production brief...';brief.className='rbox loading';
+
+  // Music section
+  var musicSection='';
+  var vm=gv('vm');
+  if(vm==='style')musicSection='Music style: '+gv('vms');
+  else if(vm==='upload')musicSection='Custom uploaded song: '+(g('v-song-name')?g('v-song-name').textContent:'uploaded file')+'. Start time: '+gv('vst');
+  else if(vm==='youtube')musicSection='Song from YouTube: '+gv('v-song-yt')+'. Start time: '+gv('vst');
+  else musicSection='No background music — use artist audio only';
+
+  // Voiceover section
+  var voSection='';
+  var vvo=gv('vvo');
+  if(vvo==='no')voSection='No voiceover needed';
+  else if(vvo==='write')voSection='WRITE a voiceover script in '+(gv('vvo-lang')||'English')+', tone: '+(gv('vvo-tone')||'Exciting')+'. Include it in full in the brief under VOICEOVER SCRIPT section.';
+  else if(vvo==='custom')voSection='Custom voiceover script provided: "'+gv('vvo-script')+'" — Language: '+(gv('vvo-lang')||'English')+', Tone: '+(gv('vvo-tone')||'Exciting');
+
+  var prompt='You are a professional video producer for South Florida Pakistani-American events. Create a detailed production brief for '+co.name+' ('+co.president+').\n\nVIDEO DETAILS:\nTitle: '+(gv('vt')||'Event Promo')+'\nFormat: '+gv('vf')+'\nLength: '+gv('vl')+'\nAspect Ratio: '+gv('var')+'\nYouTube Artist Clips ('+ytLinks.length+'): '+ytLinks.map(function(l,i){return '\n  '+(i+1)+'. '+l;}).join('')+'\n\nMUSIC:\n'+musicSection+'\n\nVOICEOVER:\n'+voSection+'\n\nON-SCREEN TEXT:\n'+(gv('vtext')||'none')+'\n\nSPECIAL INSTRUCTIONS:\n'+(gv('vspec')||'none')+'\n\nWrite a complete professional production brief with these sections:\n1) CONCEPT & VISION\n2) CLIP-BY-CLIP GUIDE (for each YouTube link — which moments to use, timestamps to look for)\n3) SCENE TIMELINE (second-by-second breakdown)\n4) MUSIC MIXING GUIDE (when to fade in/out, volume levels, sync points)\n5) VOICEOVER SCRIPT (full script if requested, or placement guide)\n6) TEXT OVERLAY TIMING (when each line appears/disappears)\n7) EXPORT SETTINGS (resolution, format per platform)\n8) FREE EDITING TOOLS (CapCut, DaVinci Resolve, or similar — step by step for beginners)\n9) FINAL CHECKLIST';
+
+  try{var t=await claude(prompt,1800);brief.textContent=t;brief.className='rbox';autoSaveText('Video-Brief-'+(gv('vt')||'promo').replace(/[^a-zA-Z0-9]/g,'-')+'.txt',t);}
+  catch(e){brief.textContent='⚠️ Could not generate. Please try again.';brief.className='rbox';}
+}
+function clearVideo(){ytLinks=[];renderYT();clr(['vt','vtext','vspec','v-song-yt','vvo-script']);if(g('v-song-prev'))g('v-song-prev').style.display='none';g('v-out').style.display='none';}
 </script>
 </body>
 </html>
