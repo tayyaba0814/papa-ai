@@ -803,33 +803,30 @@ function fmtDate(val){if(!val)return'TBD';var d=new Date(val+'T00:00:00');return
 function fmtDateShort(val){if(!val)return'Upon Receipt';var d=new Date(val+'T00:00:00');return d.toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});}
 function strip(t){return t.replace(/```json|```/g,'').trim();}
 function coSign(){return '\n\nRespectfully,\n\n'+co.president+'\nPresident\n'+co.name+'\n'+co.address+'\nPhone: '+co.phone+' | Email: '+co.email;}
-async function claude(prompt,max){
-  max=max||1200;
-  try{
-    var r=await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',
-      headers:{
-        'Content-Type':'application/json',
-        'x-api-key':'',
-        'anthropic-version':'2023-06-01',
-        'anthropic-dangerous-allow-browser':'true'
-      },
-      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:max,messages:[{role:'user',content:prompt}]})
+// ── PROXY URL — update this after deploying to Vercel ──
+var PROXY_URL = 'https://papa-ai-proxy.vercel.app/api/claude';
+
+async function claude(prompt, max) {
+  max = max || 1200;
+  try {
+    var r = await fetch(PROXY_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt: prompt, max_tokens: max })
     });
-    if(!r.ok){
-      var err=await r.text();
-      console.error('API error '+r.status+':',err);
-      throw new Error('API returned '+r.status);
+    if (!r.ok) {
+      var errData = await r.json().catch(function(){ return {}; });
+      console.error('Proxy error ' + r.status + ':', errData);
+      throw new Error('Service error ' + r.status);
     }
-    var d=await r.json();
-    if(!d.content){throw new Error('No content in response: '+JSON.stringify(d));}
-    return d.content.map(function(c){return c.text||'';}).join('');
-  }catch(e){
-    console.error('Claude API call failed:',e);
+    var d = await r.json();
+    if (!d.text) { throw new Error('No text in response'); }
+    return d.text;
+  } catch(e) {
+    console.error('claude() failed:', e);
     throw e;
   }
 }
-window.addEventListener('load',function(){showSetupInstructions();});
 
 async function generateTodo(){
   var out=g('todo-out');
@@ -849,7 +846,7 @@ async function generateTodo(){
       html+='</div>';
     });
     out.innerHTML=html;
-  }catch(e){out.innerHTML='<div class="card" style="color:var(--red);">⚠️ Could not generate. Please try again.</div>';}
+  }catch(e){console.error('generateTodo:',e);out.innerHTML='<div class="card" style="color:var(--red);">⚠️ '+('Could not generate. Please check your API key and try again.')+'</div>';}
 }
 function tog(cbId,ttId){var cb=g(cbId),tt=g(ttId);cb.classList.toggle('chk');cb.textContent=cb.classList.contains('chk')?'✓':'';tt.classList.toggle('done');}
 
@@ -883,6 +880,16 @@ function buildFlyerHTML(d,idx,theme,styleType){
   return '<div style="background:'+t.bg+';border-radius:14px;padding:24px 20px;text-align:center;color:'+t.text+';position:relative;overflow:hidden;min-height:320px;border:2px solid '+t.accent+'40;"><div style="position:absolute;inset:0;background:radial-gradient(ellipse at 20% 20%,'+t.accent+'08 0%,transparent 50%);pointer-events:none;"></div><div style="position:relative;z-index:1;">'+(hasLogo?'<img src="'+logoEl.src+'" style="max-height:44px;border-radius:5px;margin-bottom:8px;display:block;margin-left:auto;margin-right:auto;"/>':'')+'<div style="font-size:11px;font-weight:700;color:'+t.accent+';letter-spacing:.15em;text-transform:uppercase;margin-bottom:4px;">'+co.name+' PRESENTS</div>'+(d.subtitle?'<div style="font-size:10px;color:'+t.secondary+';letter-spacing:.1em;margin-bottom:6px;">'+d.subtitle+'</div>':'')+'<div style="font-family:Cinzel,serif;font-size:24px;font-weight:900;color:'+t.accent+';line-height:1.15;margin-bottom:6px;text-shadow:0 2px 8px rgba(0,0,0,.5);">'+(d.headline||gv('fl-ev')||'EVENT')+'</div>'+(d.tagline?'<div style="font-size:11px;color:'+t.secondary+';font-style:italic;margin-bottom:10px;">'+d.tagline+'</div>':'')+photosSection+(artistPhotos.length===0?'<div style="font-size:15px;font-weight:700;color:'+t.text+';line-height:1.8;margin:10px 0;">'+(gv('fl-artists')||'').replace(/\n/g,'<br/>')+'</div>':'')+'<div style="background:'+t.cardBg+';border:1px solid '+t.accent+'60;border-radius:9px;padding:12px 16px;margin:12px 0;"><div style="font-size:18px;font-weight:900;color:'+t.accent+';">'+(d.dateStr||fmtDate(gv('fl-date')))+'</div>'+(gv('fl-time')?'<div style="font-size:13px;color:'+t.text+';">⏰ '+gv('fl-time')+'</div>':'')+'<div style="font-size:13px;color:'+t.text+';margin-top:4px;">'+(gv('fl-venue')||'')+'</div>'+(gv('fl-vaddr')?'<div style="font-size:11px;color:'+t.secondary+';">'+gv('fl-vaddr')+'</div>':'')+(gv('fl-tickets')?'<div style="font-size:13px;color:'+t.accent+';font-weight:700;margin-top:5px;">'+gv('fl-tickets')+'</div>':'')+(gv('fl-price')?'<div style="font-size:12px;color:'+t.secondary+';">'+gv('fl-price')+'</div>':'')+'</div>'+sponsorsHtml+contactsHtml+orgLine+landmark+'</div></div>';
 }
 async function genFlyer(){
+  // Validate required fields
+  var missing=[];
+  if(!gv('fl-ev').trim()) missing.push('Event Name');
+  if(!gv('fl-date').trim()) missing.push('Event Date');
+  if(!gv('fl-artists').trim()) missing.push('Artists / Performers');
+  if(missing.length){
+    var previewsEl=g('fl-previews');
+    if(previewsEl){g('fl-out').style.display='block';previewsEl.innerHTML='<div style="color:var(--gold);padding:20px;grid-column:1/-1;line-height:1.8;">⚠️ <strong>Please fill in these required fields first:</strong><br/>• '+missing.join('<br/>• ')+'</div>';}
+    return;
+  }
   var numDesigns=parseInt(gv('fl-count'))||2;
   g('fl-out').style.display='block';
   var previewsEl=g('fl-previews');
@@ -906,7 +913,7 @@ async function genFlyer(){
       previewsEl.appendChild(wrap);
     });
     if(g('fl-edit-which'))g('fl-edit-which').innerHTML=flyerPreviews.map(function(_,i){return '<option value="'+(i+1)+'">Design '+(i+1)+'</option>';}).join('');
-  }catch(e){previewsEl.innerHTML='<div style="color:var(--red);padding:20px;grid-column:1/-1;">⚠️ Could not generate. Please try again.</div>';}
+  }catch(e){console.error('genFlyer:',e);var errMsg=e.message&&e.message.includes('API key')?'Please set your API key first — click the red "Set API Key" button at the top right of the page.':e.message&&e.message.includes('401')?'Invalid API key. Click "Set API Key" at the top right to update it.':'Could not generate. Make sure your API key is set (top right) and try again.';previewsEl.innerHTML='<div style="color:var(--red);padding:20px;grid-column:1/-1;line-height:1.8;">⚠️ '+errMsg+'</div>';}
 }
 function selectDesign(num){showToast('✅ Design '+num+' selected! Use "Request Changes" below to refine, or Save to Desktop.');}
 function saveFlyer(num){var idx=num-1;if(!flyerPreviews[idx]){alert('Generate designs first.');return;}autoSaveText('Flyer-Design-'+num+'-'+((gv('fl-ev')||'event').replace(/[^a-zA-Z0-9]/g,'-'))+'.txt','FLYER DESIGN '+num+'\n\n'+JSON.stringify(flyerPreviews[idx],null,2));}
@@ -966,20 +973,20 @@ async function genSocial(){
     }).join('');
   }catch(e){
     console.error('genSocial error:',e);
-    out.innerHTML='<div class="card" style="color:var(--red);">⚠️ Could not generate posts. Please try again.</div>';
+    out.innerHTML='<div class="card" style="color:var(--red);">⚠️ '+('Could not generate posts. Please try again.')+'</div>';
   }
 }
 
 async function genAgenda(){
   var out=g('ag-out');out.innerHTML='<div class="card"><div class="loading">✨ Building your agenda...</div></div>';
-  var prompt='Create a detailed run-of-show for '+co.name+' Pakistan festival. Their real format: Welcome+Quran Recitation, Kids Performances, National Anthems (Pakistan+USA), Chief Guest Speeches, Shield/Award Presentations, Flag Ceremony, Artist Performances, Closing Remarks.\nEvent: '+(gv('ag-ev')||'Pakistan Azadi Mela 2026')+', Start: '+(gv('ag-time')||'7:30 PM')+', Artists: '+(gv('ag-artists')||'TBD')+', Guests: '+(gv('ag-guests')||'Ambassador, Chief of Police, Mayor')+', Special: '+(gv('ag-special')||'Flag ceremony, shield presentations')+'\nReturn ONLY JSON array. Each: {"time":string,"item":string,"duration":string,"notes":string}';
+  var timing=gv('ag-timing')||'Standard 10-15 min breaks between performers';var agNotes=gv('ag-notes')||'';var prompt='Create a detailed run-of-show for '+co.name+' Pakistan festival. Their real format: Welcome+Quran Recitation, Kids Performances, National Anthems (Pakistan+USA), Chief Guest Speeches, Shield/Award Presentations, Flag Ceremony, Artist Performances, Closing Remarks.\nEvent: '+(gv('ag-ev')||'Pakistan Azadi Mela 2026')+', Start: '+(gv('ag-time')||'7:30 PM')+', Artists: '+(gv('ag-artists')||'TBD')+', Guests: '+(gv('ag-guests')||'Ambassador, Chief of Police, Mayor')+', Special Segments: '+(gv('ag-special')||'Flag ceremony, shield presentations')+', Timing & Break Instructions: '+timing+', MC Notes: '+agNotes+'\nReturn ONLY JSON array. Each item: {"time":string,"item":string,"duration":string,"notes":string,"type":string} where type is: opening|speech|performance|ceremony|break|award|closing|custom. Respect all timing instructions.';
   try{
     var t=await claude(prompt);var items=JSON.parse(strip(t));
     var ev=gv('ag-ev')||'Pakistan Azadi Mela 2026';
     var agendaText=ev+' — Run of Show\n\n'+items.map(function(i){return i.time+'\t'+i.item+(i.duration?' ('+i.duration+')':'')+(i.notes?'\n\t'+i.notes:'');}).join('\n');
     autoSaveText('Agenda-'+ev.replace(/\W/g,'-')+'.txt',agendaText);
     out.innerHTML='<div class="agenda-wrap"><div class="agenda-title">'+ev+' — Run of Show</div>'+items.map(function(i){return '<div class="agenda-item"><div class="agenda-time">'+i.time+'</div><div class="agenda-act"><strong>'+i.item+'</strong>'+(i.duration?' <span style="color:#999;font-size:11px;">('+i.duration+')</span>':'')+(i.notes?'<br/><span style="font-size:11px;color:#888;">'+i.notes+'</span>':'')+'</div></div>';}).join('')+'</div><div class="brow"><button class="btn btn-s" onclick="navigator.clipboard.writeText(document.querySelector(\'.agenda-wrap\').innerText)">📋 Copy Agenda</button><button class="btn btn-p" onclick="autoSaveText(\'Agenda-'+ev.replace(/\W/g,'-')+'.txt\',document.querySelector(\'.agenda-wrap\').innerText)">💾 Save to Desktop</button></div>';
-  }catch(e){out.innerHTML='<div class="card" style="color:var(--red);">⚠️ Could not generate. Please try again.</div>';}
+  }catch(e){console.error('generateTodo:',e);out.innerHTML='<div class="card" style="color:var(--red);">⚠️ '+('Could not generate. Please check your API key and try again.')+'</div>';}
 }
 
 function genSeats(){
@@ -1022,7 +1029,7 @@ async function genLetter(){
     var fname=(letterType+'-'+new Date().toISOString().slice(0,10)+'.txt').replace(/[^a-z0-9\-\.]/gi,'-');
     autoSaveText(fname, co.name+'\n'+co.address+'\nPhone: '+co.phone+' | Email: '+co.email+'\n\n'+t);
     out.innerHTML='<div class="letter-doc"><div class="l-co">'+co.name+'</div><div style="white-space:pre-wrap;line-height:1.8;">'+t+'</div><div class="l-footer">'+co.address+' — Phone: '+co.phone+' — Email: '+co.email+'</div></div><div class="brow"><button class="btn btn-s" onclick="navigator.clipboard.writeText(document.querySelector(\'.letter-doc\').innerText)">📋 Copy Letter</button><button class="btn btn-p" onclick="autoSaveText(\''+fname+'\',document.querySelector(\'.letter-doc\').innerText)">💾 Save to Desktop ↗</button></div>';
-  }catch(e){out.innerHTML='<div class="card" style="color:var(--red);">⚠️ Could not generate. Please try again.</div>';}
+  }catch(e){console.error('generateTodo:',e);out.innerHTML='<div class="card" style="color:var(--red);">⚠️ '+('Could not generate. Please check your API key and try again.')+'</div>';}
 }
 
 function genInvoice(){
