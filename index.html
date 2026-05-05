@@ -846,7 +846,7 @@ async function generateTodo(){
       html+='</div>';
     });
     out.innerHTML=html;
-  }catch(e){console.error('generateTodo:',e);out.innerHTML='<div class="card" style="color:var(--red);">⚠️ '+('Could not generate. Please check your API key and try again.')+'</div>';}
+  }catch(e){console.error('generateTodo:',e);out.innerHTML='<div class="card" style="color:var(--red);">⚠️ '+('Could not generate. Please try again in a moment.')+'</div>';}
 }
 function tog(cbId,ttId){var cb=g(cbId),tt=g(ttId);cb.classList.toggle('chk');cb.textContent=cb.classList.contains('chk')?'✓':'';tt.classList.toggle('done');}
 
@@ -913,7 +913,7 @@ async function genFlyer(){
       previewsEl.appendChild(wrap);
     });
     if(g('fl-edit-which'))g('fl-edit-which').innerHTML=flyerPreviews.map(function(_,i){return '<option value="'+(i+1)+'">Design '+(i+1)+'</option>';}).join('');
-  }catch(e){console.error('genFlyer:',e);var errMsg=e.message&&e.message.includes('API key')?'Please set your API key first — click the red "Set API Key" button at the top right of the page.':e.message&&e.message.includes('401')?'Invalid API key. Click "Set API Key" at the top right to update it.':'Could not generate. Make sure your API key is set (top right) and try again.';previewsEl.innerHTML='<div style="color:var(--red);padding:20px;grid-column:1/-1;line-height:1.8;">⚠️ '+errMsg+'</div>';}
+  }catch(e){console.error('genFlyer:',e);var errMsg=e.message&&e.message.includes('API key')?'Please set your API key first — click the red "Set API Key" button at the top right of the page.':e.message&&e.message.includes('401')?'Invalid API key. Click "Set API Key" at the top right to update it.':'Could not generate. The AI service may be temporarily unavailable. Please try again in a moment.';previewsEl.innerHTML='<div style="color:var(--red);padding:20px;grid-column:1/-1;line-height:1.8;">⚠️ '+errMsg+'</div>';}
 }
 function selectDesign(num){showToast('✅ Design '+num+' selected! Use "Request Changes" below to refine, or Save to Desktop.');}
 function saveFlyer(num){var idx=num-1;if(!flyerPreviews[idx]){alert('Generate designs first.');return;}autoSaveText('Flyer-Design-'+num+'-'+((gv('fl-ev')||'event').replace(/[^a-zA-Z0-9]/g,'-'))+'.txt','FLYER DESIGN '+num+'\n\n'+JSON.stringify(flyerPreviews[idx],null,2));}
@@ -986,7 +986,7 @@ async function genAgenda(){
     var agendaText=ev+' — Run of Show\n\n'+items.map(function(i){return i.time+'\t'+i.item+(i.duration?' ('+i.duration+')':'')+(i.notes?'\n\t'+i.notes:'');}).join('\n');
     autoSaveText('Agenda-'+ev.replace(/\W/g,'-')+'.txt',agendaText);
     out.innerHTML='<div class="agenda-wrap"><div class="agenda-title">'+ev+' — Run of Show</div>'+items.map(function(i){return '<div class="agenda-item"><div class="agenda-time">'+i.time+'</div><div class="agenda-act"><strong>'+i.item+'</strong>'+(i.duration?' <span style="color:#999;font-size:11px;">('+i.duration+')</span>':'')+(i.notes?'<br/><span style="font-size:11px;color:#888;">'+i.notes+'</span>':'')+'</div></div>';}).join('')+'</div><div class="brow"><button class="btn btn-s" onclick="navigator.clipboard.writeText(document.querySelector(\'.agenda-wrap\').innerText)">📋 Copy Agenda</button><button class="btn btn-p" onclick="autoSaveText(\'Agenda-'+ev.replace(/\W/g,'-')+'.txt\',document.querySelector(\'.agenda-wrap\').innerText)">💾 Save to Desktop</button></div>';
-  }catch(e){console.error('generateTodo:',e);out.innerHTML='<div class="card" style="color:var(--red);">⚠️ '+('Could not generate. Please check your API key and try again.')+'</div>';}
+  }catch(e){console.error('generateTodo:',e);out.innerHTML='<div class="card" style="color:var(--red);">⚠️ '+('Could not generate. Please try again in a moment.')+'</div>';}
 }
 
 function genSeats(){
@@ -1029,7 +1029,7 @@ async function genLetter(){
     var fname=(letterType+'-'+new Date().toISOString().slice(0,10)+'.txt').replace(/[^a-z0-9\-\.]/gi,'-');
     autoSaveText(fname, co.name+'\n'+co.address+'\nPhone: '+co.phone+' | Email: '+co.email+'\n\n'+t);
     out.innerHTML='<div class="letter-doc"><div class="l-co">'+co.name+'</div><div style="white-space:pre-wrap;line-height:1.8;">'+t+'</div><div class="l-footer">'+co.address+' — Phone: '+co.phone+' — Email: '+co.email+'</div></div><div class="brow"><button class="btn btn-s" onclick="navigator.clipboard.writeText(document.querySelector(\'.letter-doc\').innerText)">📋 Copy Letter</button><button class="btn btn-p" onclick="autoSaveText(\''+fname+'\',document.querySelector(\'.letter-doc\').innerText)">💾 Save to Desktop ↗</button></div>';
-  }catch(e){console.error('generateTodo:',e);out.innerHTML='<div class="card" style="color:var(--red);">⚠️ '+('Could not generate. Please check your API key and try again.')+'</div>';}
+  }catch(e){console.error('generateTodo:',e);out.innerHTML='<div class="card" style="color:var(--red);">⚠️ '+('Could not generate. Please try again in a moment.')+'</div>';}
 }
 
 function genInvoice(){
