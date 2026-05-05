@@ -831,9 +831,9 @@ async function claude(prompt, max) {
 async function generateTodo(){
   var out=g('todo-out');
   out.innerHTML='<div class="card"><div class="loading">✨ Generating your event checklist...</div></div>';
-  var prompt='You are an expert event producer for large Pakistani cultural festivals in South Florida (3,000+ attendees). Client is Liaquat Ali, President of '+co.name+', running these events for 27+ years at Coral Springs Center for the Arts.\n\nEvent: '+(gv('td-ev')||'the event')+', Date: '+(gv('td-date')||'TBD')+', Venue: '+(gv('td-venue')||'Coral Springs Center for the Arts')+', Attendance: '+(gv('td-att')||'3,000+')+', Artists: '+(gv('td-artists')||'TBD')+', Chief Guests: '+(gv('td-guests')||'Ambassador, Chief of Police, Mayor')+', Notes: '+(gv('td-notes')||'')+'\n\nReturn ONLY a JSON array. Each: {"category":string,"task":string,"priority":"high"|"medium"|"low"}. Categories: Artist Management, Chief Guests & Dignitaries, Venue & Logistics, Marketing & Promotion, Sponsors & Invoicing, Tickets & Sales, Production & Sound, Security & Parking, Hospitality & Hotels, Certificates & Awards, Day-Of Operations, Post-Event Follow-Up. Include 35+ tasks.';
+  var prompt='You are an expert event producer for large Pakistani cultural festivals in South Florida (3,000+ attendees). Client is Liaquat Ali, President of '+co.name+', running these events for 27+ years at Coral Springs Center for the Arts.\n\nEvent: '+(gv('td-ev')||'the event')+', Date: '+(gv('td-date')||'TBD')+', Venue: '+(gv('td-venue')||'Coral Springs Center for the Arts')+', Attendance: '+(gv('td-att')||'3,000+')+', Artists: '+(gv('td-artists')||'TBD')+', Chief Guests: '+(gv('td-guests')||'Ambassador, Chief of Police, Mayor')+', Notes: '+(gv('td-notes')||'')+'\n\nReturn ONLY a JSON array. Each: {"category":string,"task":string,"priority":"high"|"medium"|"low"}. Categories: Artist Management, Chief Guests & Dignitaries, Venue & Logistics, Marketing & Promotion, Sponsors & Invoicing, Tickets & Sales, Production & Sound, Security & Parking, Hospitality & Hotels, Certificates & Awards, Day-Of Operations, Post-Event Follow-Up. Include exactly 20 tasks total, spread across categories.';
   try{
-    var t=await claude(prompt,1500);
+    var t=await claude(prompt,2500);
     var tasks=JSON.parse(strip(t));
     var cats=[...new Set(tasks.map(function(t){return t.category;}))];
     var html='';
@@ -1025,7 +1025,7 @@ function buildPrompt(f){
 async function genLetter(){
   var out=g('letter-out');out.innerHTML='<div class="card"><div class="loading">✨ Writing your letter...</div></div>';
   try{
-    var t=await claude(buildPrompt(getFields()),1200);
+    var t=await claude(buildPrompt(getFields()),1800);
     var fname=(letterType+'-'+new Date().toISOString().slice(0,10)+'.txt').replace(/[^a-z0-9\-\.]/gi,'-');
     autoSaveText(fname, co.name+'\n'+co.address+'\nPhone: '+co.phone+' | Email: '+co.email+'\n\n'+t);
     out.innerHTML='<div class="letter-doc"><div class="l-co">'+co.name+'</div><div style="white-space:pre-wrap;line-height:1.8;">'+t+'</div><div class="l-footer">'+co.address+' — Phone: '+co.phone+' — Email: '+co.email+'</div></div><div class="brow"><button class="btn btn-s" onclick="navigator.clipboard.writeText(document.querySelector(\'.letter-doc\').innerText)">📋 Copy Letter</button><button class="btn btn-p" onclick="autoSaveText(\''+fname+'\',document.querySelector(\'.letter-doc\').innerText)">💾 Save to Desktop ↗</button></div>';
